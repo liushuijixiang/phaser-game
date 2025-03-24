@@ -31,9 +31,9 @@ export class MenuScene extends Phaser.Scene {
 
         // ✅ 初始化数据
         this.registry.set('playerData', {
-            hp: 10,
+            hp: 100,
             maxHp: 100,
-            mp: 0,
+            mp: 50,
             maxMp: 50,
             attack: 30,
             speed: 100,

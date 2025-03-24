@@ -22,7 +22,7 @@ export class HealSkill {
 
     /** 技能生效 */
     activate(caster) {
-        if (caster.mp >= this.manaCost) {
+        if (caster.mp >= this.manaCost && caster.hp < caster.maxHp) {
             caster.mp -= this.manaCost;
             caster.hp = Math.min(caster.hp + this.healAmount, caster.maxHp);
             console.log(`✨ ${caster.name} 消耗 ${this.manaCost} 点蓝，回复 ${this.healAmount} 点血!`);

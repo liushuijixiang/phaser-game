@@ -14,7 +14,7 @@ export class LevelSelectScene extends Phaser.Scene {
 
 
     create() {
-        this.add.text(400, 50, '选择你的路径', { fontSize: '28px', fill: '#fff' }).setOrigin(0.5);
+        this.add.text(400*window.innerWidth/800, 50*window.innerHeight/600, '选择你的路径', { fontSize: '28px', fill: '#fff' }).setOrigin(0.5);
 
         // 创建地图容器
         this.mapContainer = this.add.container(0, 0);
@@ -53,6 +53,7 @@ export class LevelSelectScene extends Phaser.Scene {
     }
 
     update() {
+
         if (this.scrollThumb && this.scrollTrack) {
             const barY = this.scrollTrack.y;
             const barHeight = this.scrollTrack.height;
@@ -60,6 +61,7 @@ export class LevelSelectScene extends Phaser.Scene {
             const percent = this.cameras.main.scrollY / (this.cameras.main.getBounds().height - this.cameras.main.height);
             this.scrollThumb.y = barY - barHeight / 2 + percent * barHeight;
         }
+
     }
 
     // generateRandomMap() {
@@ -181,13 +183,13 @@ export class LevelSelectScene extends Phaser.Scene {
 
 
     createMap() {
-        const startX = 400, startY = 150, gapY = 100;
+        const startX = 400, startY = 150*window.innerHeight/600, gapY = 100*window.innerHeight/600;
 
         this.mapData.forEach((row, rowIndex) => {
             let xOffset = 400 - (row.length * 120) / 2;
 
             row.forEach((node, colIndex) => {
-                let nodeX = xOffset + colIndex * 120;
+                let nodeX = (xOffset + colIndex * 120)*window.innerWidth/800;
                 let nodeY = startY + rowIndex * gapY;
 
                 // **使用文字按钮**
@@ -219,11 +221,11 @@ export class LevelSelectScene extends Phaser.Scene {
                     let prevRow = this.mapData[rowIndex - 1];
                     prevRow.forEach(prev => {
                         prev.connections.forEach(nextId => {
-                            let prevX = 400 - (prevRow.length * 120) / 2 + prev.col * 120;
+                            let prevX = (400 - (prevRow.length * 120) / 2 + prev.col * 120)*window.innerWidth/800;
                             let prevY = startY + (rowIndex - 1) * gapY;
 
                             let next = this.mapData[rowIndex].find(n => n.id === nextId);
-                            let nextX = 400 - (this.mapData[rowIndex].length * 120) / 2 + next.col * 120;
+                            let nextX = (400 - (this.mapData[rowIndex].length * 120) / 2 + next.col * 120)*window.innerWidth/800;
                             let nextY = startY + rowIndex * gapY;
 
                             let addline = this.add.line(0, 0, prevX, prevY + 20, nextX, nextY - 20, 0xffffff).setOrigin(0, 0);
@@ -254,7 +256,7 @@ export class LevelSelectScene extends Phaser.Scene {
         // 启用手指拖动或鼠标拖动
         this.input.on('pointermove', (pointer) => {
             if (pointer.isDown) {
-                this.cameras.main.scrollY -= (pointer.velocity.y / 10);
+                this.cameras.main.scrollY -= (pointer.velocity.y / 10*window.innerHeight/600);
             }
         });
 
@@ -264,35 +266,26 @@ export class LevelSelectScene extends Phaser.Scene {
         });
 
         // 限制 scroll 范围
-        this.cameras.main.setBounds(0, 0, 800, this.mapData.length * 120);
+        this.cameras.main.setBounds(0, 0, window.innerWidth, this.mapData.length * 120*window.innerHeight/600);
     }
 
     createScrollBar() {
-        const barHeight = 200;
-        const barX = this.scale.width - 30;
-        const barY = 100;
+        const barHeight = window.innerHeight - 100*window.innerHeight/600;
+        const barX = this.scale.width - 50*window.innerWidth/800;
+        const barY = window.innerHeight/2;
 
         // 滚动条背景
         this.scrollTrack = this.add.rectangle(barX, barY, 10, barHeight, 0x444444).setOrigin(0.5).setScrollFactor(0);
 
         // 滚动条滑块
         this.scrollThumb = this.add.rectangle(barX, barY, 14, 40, 0xffffff).setOrigin(0.5).setInteractive({ draggable: true }).setScrollFactor(0);
+        this.scrollThumb.setInteractive();
 
-        // 拖动逻辑
-        this.input.setDraggable(this.scrollThumb);
-        this.input.on('drag', (pointer, gameObject, dragX, dragY) => {
-            dragY = Phaser.Math.Clamp(dragY, barY - barHeight / 2, barY + barHeight / 2);
-            gameObject.y = dragY;
-
-            const percent = (dragY - (barY - barHeight / 2)) / barHeight;
-            const maxScroll = this.cameras.main.getBounds().height - this.cameras.main.height;
-            this.cameras.main.scrollY = percent * maxScroll;
-        });
     }
 
     drawGoldDisplay() {
         const gold = this.registry.get("gold") || 0;
-        this.goldText = this.add.text(this.scale.width - 80, 20, `💰 ${gold}`, {
+        this.goldText = this.add.text(this.scale.width - 80*this.scale.width/800, 20*this.scale.height/600, `💰 ${gold}`, {
             fontSize: "20px",
             fill: "#ffd700"
         }).setOrigin(1, 0);

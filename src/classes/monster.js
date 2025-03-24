@@ -8,8 +8,8 @@ export class Monster {
 
         // 创建角色
         this.sprite = scene.physics.add.sprite(x, y, texture);
-        this.sprite.setBounce(0.2);
-        this.sprite.setCollideWorldBounds(true);
+        // this.sprite.setBounce(0.2);
+        // this.sprite.setCollideWorldBounds(true);
 
 
         // 角色属性
@@ -31,11 +31,11 @@ export class Monster {
         // this.skillManager = new SkillManager(this); // 管理技能
 
         // UI 位置 & 尺寸
-        this.uiX = 560;
-        this.uiY = 70;
-        this.barWidth = 200;
-        this.barHeight = 20;
-        this.borderThickness = 2;
+        this.uiX = 560*window.innerWidth/800;
+        this.uiY = 70*window.innerHeight/600;
+        this.barWidth = 200*window.innerWidth/800;
+        this.barHeight = 20*window.innerHeight/600;
+        this.borderThickness = 2*window.innerHeight/600;
 
         // **血条边框**
         this.hpBorder = scene.add.graphics();
@@ -67,30 +67,31 @@ export class Monster {
         // **蓝条边框**
         this.mpBorder = scene.add.graphics();
         this.mpBorder.lineStyle(this.borderThickness, 0xffffff, 1); // 白色边框
-        this.mpBorder.strokeRect(this.uiX, this.uiY + 30, this.barWidth, this.barHeight);
+        this.mpBorder.strokeRect(this.uiX, this.uiY + 30*window.innerHeight/600, this.barWidth, this.barHeight);
 
         // **蓝条背景**
         this.mpBg = scene.add.graphics();
         this.mpBg.fillStyle(0x222222, 1);
-        this.mpBg.fillRect(this.uiX, this.uiY + 30, this.barWidth, this.barHeight);
+        this.mpBg.fillRect(this.uiX, this.uiY + 30*window.innerHeight/600, this.barWidth, this.barHeight);
 
         // **蓝条（柔和蓝色）**
         this.mpBar = scene.add.graphics();
         this.mpBar.fillStyle(0x4d8fd4, 1);
 
         // **蓝量数值**
-        this.mpText = scene.add.text(this.uiX + this.barWidth / 2, this.uiY + 32, '', {
+        this.mpText = scene.add.text(this.uiX + this.barWidth / 2, this.uiY + 32*window.innerHeight/600, '', {
             fontSize: '16px',
             fill: '#ffffff',
             fontStyle: 'bold'
         }).setOrigin(0.5, 0);
 
         // **绘制 UI**
-        this.updateUI();
+        // this.updateUI();
     }
 
     // **更新血条 & 蓝条**
     updateUI() {
+
         let currentHpWidth = (Math.max(this.hp,0) / Math.max(this.maxHp, this.hp + Math.max(this.shield,0))) * this.barWidth;
 
         if(this.gameover){}else{
@@ -144,11 +145,58 @@ export class Monster {
             // **更新蓝条**
             this.mpBar.clear();
             this.mpBar.fillStyle(0x4d8fd4, 1);
-            this.mpBar.fillRect(this.uiX, this.uiY + 30, currentMpWidth, this.barHeight);
+            this.mpBar.fillRect(this.uiX, this.uiY + 30*window.innerHeight/600, currentMpWidth, this.barHeight);
 
             // **更新蓝量数值**
             this.mpText.setText(`${this.mp} / ${this.maxMp}`);
         }
+    }
+
+    updateUIPosition() {
+        // 重新计算 UI 尺寸
+        this.uiX = 560 * window.innerWidth / 800;
+        this.uiY = 70 * window.innerHeight / 600;
+        this.barWidth = 200 * window.innerWidth / 800;
+        this.barHeight = 20 * window.innerHeight / 600;
+        this.borderThickness = 2 * window.innerHeight / 600;
+
+        // 清空并重绘边框
+        this.hpBorder.clear();
+        this.hpBorder.lineStyle(this.borderThickness, 0xffffff, 1); // 白色边框
+        this.hpBorder.strokeRect(this.uiX, this.uiY, this.barWidth, this.barHeight);
+        this.mpBorder.clear();
+        this.mpBorder.lineStyle(this.borderThickness, 0xffffff, 1); // 白色边框
+        this.mpBorder.strokeRect(this.uiX, this.uiY + 30*window.innerHeight/600, this.barWidth, this.barHeight);
+
+        // 重绘背景
+        this.hpBg.clear();
+        this.hpBg.fillStyle(0x222222, 1); // 深灰色背景
+        this.hpBg.fillRect(this.uiX, this.uiY, this.barWidth, this.barHeight);
+        this.mpBg.clear();
+        this.mpBg.fillStyle(0x222222, 1);
+        this.mpBg.fillRect(this.uiX, this.uiY + 30*window.innerHeight/600, this.barWidth, this.barHeight);
+
+        // 更新血条和护盾条也要清除
+        this.hpBar.clear();
+        this.shieldBar.clear();
+        this.hpBar.fillStyle(0xd44d4d, 1);
+        this.shieldBar.fillStyle(0xC0C0C0, 1);
+        this.hpLostBar.clear();
+        this.hpLostBar.fillStyle(0x7a3b3b, 1); // 暗红色
+        this.mpBar.clear();
+        this.mpBar.fillStyle(0x4d8fd4, 1);
+
+        // 重新设置文本位置
+        if (this.hpText) {
+            this.hpText.setPosition(this.uiX + this.barWidth / 2, this.uiY + 2);
+        }
+
+        if (this.mpText) {
+            this.mpText.setPosition(this.uiX + this.barWidth / 2, this.uiY + 32*window.innerHeight/600);
+        }
+
+        // 可选：你也可以立即调用一次 updateUI() 来刷新数值显示
+        this.updateUI();
     }
 
     takeDamage(amount) {
@@ -174,15 +222,15 @@ export class Monster {
         // }
 
         // **更新血条**
-        this.updateUI();
+        // this.updateUI();
 
 
 
 
-        if (this.hp <= 0) {
-            this.gameover = true;
-            this.gameOver();
-        }
+        // if (this.hp <= 0) {
+        //     this.gameover = true;
+        //     this.gameOver();
+        // }
     }
 
     gameOver() {
@@ -232,13 +280,13 @@ export class Monster {
             this.tempHp = oldHp; // 初始化临时血量
         }
         this.hp = Math.min(this.hp + amount, this.maxHp);
-        this.updateUI();
+        // this.updateUI();
     }
 
     // **消耗蓝量**
     useMana(amount) {
         this.mp = Math.max(this.mp - amount, 0);
-        this.updateUI();
+        // this.updateUI();
     }
 
     // **增加攻击力**
@@ -249,7 +297,7 @@ export class Monster {
     // **增加护盾**
     gainShield(amount) {
         this.shield = Math.min(this.shield + amount, this.maxShield);
-        this.updateUI();
+        // this.updateUI();
     }
 }
 

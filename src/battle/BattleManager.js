@@ -18,6 +18,27 @@ export class BattleManager {
         this.turnEvent = null; // 🎯 **保存回合事件**
     }
 
+    updateAllUI() {
+        if (this.player1){this.player1.updateUI();}
+        if (this.player2){this.player2.updateUI();}
+        if (this.gameover1) {
+            this.gameover1.setPosition(350*window.innerWidth/800, 250*window.innerHeight/600);
+            this.gameover1.setScale(window.innerWidth/800, window.innerHeight/600);
+        }
+        if (this.gameover2) {
+            this.gameover2.setPosition(400*window.innerWidth/800, 250*window.innerHeight/600);
+            this.gameover2.setScale(window.innerWidth/800, window.innerHeight/600);
+        }
+        if (this.restart1Button) {
+            this.restart1Button.setPosition(400*window.innerWidth/800, 370*window.innerHeight/600);
+            this.restart1Button.setScale(window.innerWidth/800, window.innerHeight/600);
+        }
+        if (this.restart2Button) {
+            this.restart2Button.setPosition(400*window.innerWidth/800, 270*window.innerHeight/600);
+            this.restart2Button.setScale(window.innerWidth/800, window.innerHeight/600);
+        }
+    }
+
     /** 🎯 让战斗暂停 */
     setPause(pauseState) {
         this.isPaused = pauseState;
@@ -31,6 +52,7 @@ export class BattleManager {
     /** 开始战斗 */
     startBattle() {
         console.log("⚔ 战斗开始!");
+        
 
         // 1️⃣ 初始化临时变量
         this.initTempStats(this.player1);
@@ -45,12 +67,15 @@ export class BattleManager {
 
         // 4️⃣ 开始回合循环
         // this.nextTurn();
+        this.updateAllUI();
+
         this.turnEvent = this.scene.time.addEvent({
             delay: 1000 / this.battleSpeed, // 🎯 **影响战斗速度**
             loop: true,
             callback: () => {
                 if (this.isPaused) return; // 🎯 **暂停时不执行**
                 this.nextTurn();
+                this.updateAllUI();
             }
         });
     }
@@ -76,6 +101,7 @@ export class BattleManager {
     /** 轮到角色行动 */
     nextTurn() {
         if (this.player1.hp <= 0 || this.player2.hp <= 0) {
+            this.updateAllUI();
             this.endBattle();
             return;
         }
@@ -237,6 +263,7 @@ export class BattleManager {
 
         if (this.player1.hp > 0) {
             console.log(`🎉 ${this.player1.name} 获胜!`);
+            this.player2.gameover = true;
             let playerData = this.scene.registry.get('playerData');
             playerData.hp = this.player1.hp;
             playerData.mp = this.player1.mp;
@@ -253,6 +280,42 @@ export class BattleManager {
 
         } else if (this.player2.hp > 0) {
             console.log(`🎉 ${this.player2.name} 获胜!`);
+            this.player1.gameover = true;
+            this.gameover1 = this.scene.add.rectangle(400*window.innerWidth/800, 300*window.innerHeight/600, 300*window.innerWidth/600, 200*window.innerHeight/600, 0x000000, 0.8); // 半透明黑色背景
+            this.gameover2 = this.scene.add.text(400*window.innerWidth/800, 250*window.innerHeight/600, '游戏结束', { fontSize: '32px', fill: '#fff' }).setOrigin(0.5);
+
+            this.restart1Button = this.scene.add.text(400*window.innerWidth/800, 370*window.innerHeight/600, '再来一次', {
+                fontSize: '24px',
+                fill: '#0f0',
+                backgroundColor: '#333',
+                padding: { left: 10, right: 10, top: 5, bottom: 5 }
+            }).setOrigin(0.5).setInteractive();
+
+            this.restart1Button.on('pointerdown', () => {
+                this.scene.scene.restart(); // **重新启动当前场景**
+            });
+
+            this.restart2Button = this.scene.add.text(400*window.innerWidth/800, 270*window.innerHeight/600, '重新开始', {
+                fontSize: '24px',
+                fill: '#0f0',
+                backgroundColor: '#333',
+                padding: { left: 10, right: 10, top: 5, bottom: 5 }
+            }).setOrigin(0.5).setInteractive();
+
+            this.restart2Button.on('pointerdown', () => {
+                let mapData = undefined;
+                let returnNode = undefined;
+                let gold = undefined;
+                this.scene.registry.set('mapData', mapData);
+                this.scene.registry.set('returnNode', returnNode);
+                this.scene.registry.set('gold', gold);
+                this.scene.scene.start('MenuScene'); 
+            });
+
+            this.gameover1.setScale(window.innerWidth/800, window.innerHeight/600);
+            this.gameover2.setScale(window.innerWidth/800, window.innerHeight/600);
+            this.restart1Button.setScale(window.innerWidth/800, window.innerHeight/600);
+            this.restart2Button.setScale(window.innerWidth/800, window.innerHeight/600);
         } else {
             console.log("🤝 平局!");
         }

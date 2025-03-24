@@ -10,33 +10,40 @@ export class GameScene extends Phaser.Scene {
     }
 
     create(data) {
-        this.add.image(400, 300, 'sky'); // 背景
+        this.sky = this.add.image(window.innerWidth/2, window.innerHeight/2, 'sky').setScale(window.innerWidth / 400, window.innerHeight / 600); // 添加背景
+
+        
 
         this.enemyType = data.enemyType || "fight"; // 保存敌人类型
 
         // 创建地面
-        var platforms = this.physics.add.staticGroup();
-        platforms.create(400, 568, 'ground').setScale(2).refreshBody();
+        this.platforms = this.add.image(window.innerWidth/2, window.innerHeight*15/16, 'ground').setScale(window.innerWidth / 400, window.innerHeight / 600);
 
         //获取数据
         const playerData = this.registry.get('playerData');
         const monsterData = this.registry.get('monsterData');
 
-        // 创建角色
-        this.player = new Player(this, 100, 450, 'dude', playerData);
+        
+
+        // ✅ 响应窗口变化
+        window.addEventListener('resize', () => this.resizeGame(), false);
+        this.resizeGame(); // 初始化时调用一次
 
         // 创建角色
-        this.monster = new Monster(this, 700, 450, 'dude', monsterData);
+        this.player = new Player(this, window.innerWidth/8, window.innerHeight*7/8, 'dude', playerData);
+
+        // 创建角色
+        this.monster = new Monster(this, window.innerWidth*7/8, window.innerHeight*7/8, 'dude', monsterData);
 
         // 添加技能
         this.player.skills.push(new HealSkill());
 
 
         // 让角色与地面碰撞
-        this.physics.add.collider(this.player.sprite, platforms);
+        // this.physics.add.collider(this.player.sprite, platforms);
 
         // 让角色与地面碰撞
-        this.physics.add.collider(this.monster.sprite, platforms);
+        // this.physics.add.collider(this.monster.sprite, platforms);
 
         // 监听键盘输入
         // this.cursors = this.input.keyboard.createCursorKeys(); 
@@ -65,20 +72,31 @@ export class GameScene extends Phaser.Scene {
         // this.ui.addBattleLog("⚔️ 战斗开始！");
     }
 
-    // update() {
-    //     if (this.cursors.left.isDown) {
-    //         this.player.sprite.setVelocityX(-160);
-    //         this.player.sprite.anims.play('left', true);
-    //     } else if (this.cursors.right.isDown) {
-    //         this.player.sprite.setVelocityX(160);
-    //         this.player.sprite.anims.play('right', true);
-    //     } else {
-    //         this.player.sprite.setVelocityX(0);
-    //         this.player.sprite.anims.play('turn');
-    //     }
+    resizeGame() {
+        this.sky.setPosition(window.innerWidth/2, window.innerHeight/2);
+        this.sky.setScale(window.innerWidth / 400, window.innerHeight / 600);
+        this.platforms.setPosition(window.innerWidth/2, window.innerHeight*15/16);
+        this.platforms.setScale(window.innerWidth / 400, window.innerHeight / 600);
+        
+        
 
-    //     if (this.cursors.up.isDown && this.player.sprite.body.touching.down) {
-    //         this.player.sprite.setVelocityY(-330);
-    //     }
-    // }
+        if(this.battle) {
+            this.battle.updateAllUI();
+        }
+
+        if(this.ui) {
+            this.ui.updateUI();
+        }
+
+        if(this.player){
+            this.player.sprite.setPosition(window.innerWidth/8, window.innerHeight*7/8);
+            this.player.updateUIPosition();
+        }
+        
+        if(this.monster){
+            this.monster.sprite.setPosition(window.innerWidth*7/8, window.innerHeight*7/8);
+            this.monster.updateUIPosition();
+        }
+    }
+
 }

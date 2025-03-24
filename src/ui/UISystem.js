@@ -11,12 +11,12 @@ export class UISystem {
     /** 创建 UI 组件 */
     createUI() {
         // 🔹 **暂停按钮**
-        this.pauseButton = this.scene.add.text(400, 20, '⏸️ 暂停', { fontSize: '24px', fill: '#fff' })
+        this.pauseButton = this.scene.add.text(400*window.innerWidth/800, 20*window.innerHeight/600, '⏸️ 暂停', { fontSize: '24px', fill: '#fff' }).setScale(window.innerWidth/800, window.innerHeight/600)
             .setInteractive()
             .on('pointerdown', () => this.togglePause());
 
         // 🔹 **加速按钮**
-        this.speedButton = this.scene.add.text(600, 20, '⏩ 加速 x1', { fontSize: '24px', fill: '#fff' })
+        this.speedButton = this.scene.add.text(600*window.innerWidth/800, 20*window.innerHeight/600, '⏩ 加速 x1', { fontSize: '24px', fill: '#fff' }).setScale(window.innerWidth/800, window.innerHeight/600)
             .setInteractive()
             .on('pointerdown', () => this.toggleSpeed());
 
@@ -68,9 +68,18 @@ export class UISystem {
     }
 
     // /** 更新 UI */
-    // updateUI() {
-    //     this.playerInfo.setText(this.getPlayerInfo());
-    // }
+    updateUI() {
+        // this.playerInfo.setText(this.getPlayerInfo());
+        console.log(`update ui 1`);
+        if (this.pauseButton) {
+            this.pauseButton.setPosition(400*window.innerWidth/800, 20*window.innerHeight/600);
+            this.pauseButton.setScale(window.innerWidth/800, window.innerHeight/600);
+        }
+        if (this.speedButton) {
+            this.speedButton.setPosition(600*window.innerWidth/800, 20*window.innerHeight/600);
+            this.speedButton.setScale(window.innerWidth/800, window.innerHeight/600);
+        }
+    }
 
     // /** 更新物品栏 */
     // updateInventory(items) {

@@ -7,9 +7,10 @@ export class EventScene extends Phaser.Scene {
         // 来源类型：来自战斗胜利 or 事件节点
         const from = data.from || 'event';
 
+        this.gold = this.registry.get('gold') || 0;
         // this.add.text(400, 80, "🌟 你触发了一个事件", { fontSize: '26px', fill: '#fff' }).setOrigin(0.5);
 
-        this.drawGoldDisplay();
+        
 
         let options = [];
 
@@ -17,6 +18,7 @@ export class EventScene extends Phaser.Scene {
             this.createShop();
         } else if (from === 'victory_normal') {
             this.add.text(400, 80, "🌟 选择你的战斗奖励", { fontSize: '26px', fill: '#fff' }).setOrigin(0.5);
+            this.setGold(this.gold + 10);
             options = [
                 { text: "❤️ 最大生命 +10", effect: () => this.modifyPlayer('maxHp', 10) },
                 { text: "⚔️ 攻击 +3", effect: () => this.modifyPlayer('attack', 3) },
@@ -25,6 +27,7 @@ export class EventScene extends Phaser.Scene {
         }
         else if (from === 'victory_elite') {
             this.add.text(400, 80, "🌟 选择你的战斗奖励", { fontSize: '26px', fill: '#fff' }).setOrigin(0.5);
+            this.setGold(this.gold + 35);
             options = [
                 { text: "⭐ 获取新技能（占位）", effect: () => this.log("获得技能：烈焰斩！") },
                 { text: "🧱 护甲 +4", effect: () => this.modifyPlayer('armor', 4) },
@@ -33,6 +36,7 @@ export class EventScene extends Phaser.Scene {
         }
         else if (from === 'victory_boss') {
             this.add.text(400, 80, "🌟 选择你的战斗奖励", { fontSize: '26px', fill: '#fff' }).setOrigin(0.5);
+            this.setGold(this.gold + 100);
             options = [
                 { text: "🦴 传说技能（占位）", effect: () => this.log("获得传说技能：神灭一击！") },
                 { text: "💠 稀有饰品（占位）", effect: () => this.log("获得饰品：龙鳞指环") },
@@ -47,6 +51,8 @@ export class EventScene extends Phaser.Scene {
                 { text: "💎 获得稀有饰品（占位）", effect: () => this.log("获得：冰魄项链") }
             ];
         }
+
+        this.drawGoldDisplay();
 
         // 渲染选项
         options.forEach((opt, idx) => {
@@ -67,19 +73,20 @@ export class EventScene extends Phaser.Scene {
     }
 
     drawGoldDisplay() {
-        const gold = this.registry.get("gold") || 0;
-        this.goldText = this.add.text(this.scale.width - 80, 20, `💰 ${gold}`, {
+        if (this.goldText) this.goldText.destroy(); // 避免重复
+        this.goldText = this.add.text(this.scale.width - 80, 20, `💰 ${this.gold}`, {
             fontSize: "20px",
             fill: "#ffd700"
         }).setOrigin(1, 0);
     }
+
 
     createShop() {
         this.add.text(400, 80, "🛒 商店：选择购买一个物品", { fontSize: '26px', fill: '#fff' }).setOrigin(0.5);
         // this.add.text(this.scale.width / 2, 140, "🛒 商店：选择购买一个物品", { fontSize: '22px', fill: '#fff' }).setOrigin(0.5);
 
         this.shopItems = [];
-        this.gold = this.registry.get('gold') || 0;
+        // this.gold = this.registry.get('gold') || 0;
 
         // ✅ 左侧：恢复按钮
         this.add.text(100, this.scale.height / 2, '💖 恢复生命/蓝量\n💰 20金币', {
@@ -113,42 +120,40 @@ export class EventScene extends Phaser.Scene {
 
     buyHeal() {
         const player = this.registry.get('playerData');
-        let gold = this.registry.get('gold') || 0;
-        const cost = 15; // 你可以调整
+        // let gold = this.registry.get('gold') || 0;
+        const cost = 20; // 你可以调整
 
-        if (gold >= cost) {
-            gold -= cost;
+        if (this.gold >= cost) {
+            this.setGold(this.gold - cost);
             player.hp = player.maxHp;
             player.mp = player.maxMp;
-
             this.registry.set('playerData', player);
-            this.registry.set('gold', gold);
 
             this.showToast('生命与法力已回复 ✔');
-            this.updateGoldText();
         } else {
             this.showToast('金币不足 ❌');
         }
     }
 
     refreshShop() {
-        const gold = this.registry.get('gold') || 0;
-        const refreshCost = 5; // 刷新价格
+        // const gold = this.registry.get('gold') || 0;
+        const refreshCost = 10; // 刷新价格
 
-        if (gold < refreshCost) {
+        if (this.gold < refreshCost) {
             this.showToast('金币不足，无法刷新 ❌');
             return;
         }
 
-        this.registry.set('gold', gold - refreshCost);
-        this.updateGoldText();
+        this.setGold(this.gold - refreshCost);
+        this.drawGoldDisplay();
 
         // 移除旧商品文本
         this.shopItems.forEach(itemText => itemText.destroy());
         this.shopItems = [];
 
         // 生成新的商品
-        this.createShop();
+        this.renderShopItems(); // 只更新商品
+
     }
 
 
@@ -182,37 +187,31 @@ export class EventScene extends Phaser.Scene {
 
             btn.on('pointerdown', () => {
                 if (this.gold >= item.price) {
-                    this.gold -= item.price;
-                    this.registry.set('gold', this.gold);
-                    this.updateGoldUI();
+                    this.setGold(this.gold - item.price);
                     item.effect();
                     this.showToast(`购买成功: ${item.name}`);
                 } else {
                     this.showToast('💸 金币不足');
                 }
+                this.drawGoldDisplay();
             });
 
             this.shopItems.push(btn);
         });
     }
 
-    updateGoldText() {
-        if (this.goldText) {
-            this.goldText.setText(`💰 ${this.registry.get('gold') || 0}`);
-        }
-    }
 
 
 
     showToast(text) {
-    const msg = this.add.text(this.scale.width / 2, this.scale.height - 100, text, {
-        fontSize: "20px",
-        fill: "#fff",
-        backgroundColor: "#000"
-    }).setOrigin(0.5);
+        const msg = this.add.text(this.scale.width / 2, this.scale.height - 100, text, {
+            fontSize: "20px",
+            fill: "#fff",
+            backgroundColor: "#000"
+        }).setOrigin(0.5);
 
-    this.time.delayedCall(1500, () => msg.destroy());
-}
+        this.time.delayedCall(1500, () => msg.destroy());
+    }
 
 
     /** 🛠️ 增加玩家属性 */
@@ -265,4 +264,12 @@ export class EventScene extends Phaser.Scene {
     log(text) {
         this.add.text(400, 400, text, { fontSize: '18px', fill: '#ff0' }).setOrigin(0.5);
     }
+
+    setGold(value) {
+        this.gold = value;
+        this.registry.set('gold', value);
+        this.drawGoldDisplay();
+        // this.goldText.setText(`💰 ${value}`);
+    }
+
 }

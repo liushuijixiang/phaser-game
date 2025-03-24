@@ -208,8 +208,10 @@ export class Player {
         restart2Button.on('pointerdown', () => {
             let mapData = undefined;
             let returnNode = undefined;
+            let gold = undefined;
             this.scene.registry.set('mapData', mapData);
             this.scene.registry.set('returnNode', returnNode);
+            this.scene.registry.set('gold', gold);
             this.scene.scene.start('MenuScene'); 
         });
     }

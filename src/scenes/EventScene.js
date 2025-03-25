@@ -10,14 +10,14 @@ export class EventScene extends Phaser.Scene {
         this.gold = this.registry.get('gold') || 0;
         // this.add.text(400, 80, "🌟 你触发了一个事件", { fontSize: '26px', fill: '#fff' }).setOrigin(0.5);
 
-        
+        window.addEventListener('resize', () => this.resizeGame(), false);
 
         let options = [];
 
         if (from === 'shop') {
             this.createShop();
         } else if (from === 'victory_normal') {
-            this.add.text(400*window.innerWidth/800, 80*window.innerHeight/600, "🌟 选择你的战斗奖励", { fontSize: '26px', fill: '#fff' }).setOrigin(0.5);
+            this.text = this.add.text(400*window.innerWidth/800, 80*window.innerHeight/600, "🌟 选择你的战斗奖励", { fontSize: '26px', fill: '#fff' }).setOrigin(0.5);
             this.setGold(this.gold + 10);
             options = [
                 { text: "❤️ 最大生命 +10", effect: () => this.modifyPlayer('maxHp', 10) },
@@ -26,7 +26,7 @@ export class EventScene extends Phaser.Scene {
             ];
         }
         else if (from === 'victory_elite') {
-            this.add.text(400*window.innerWidth/800, 80*window.innerHeight/600, "🌟 选择你的战斗奖励", { fontSize: '26px', fill: '#fff' }).setOrigin(0.5);
+            this.text = this.add.text(400*window.innerWidth/800, 80*window.innerHeight/600, "🌟 选择你的战斗奖励", { fontSize: '26px', fill: '#fff' }).setOrigin(0.5);
             this.setGold(this.gold + 35);
             options = [
                 { text: "⭐ 获取新技能（占位）", effect: () => this.log("获得技能：烈焰斩！") },
@@ -35,7 +35,7 @@ export class EventScene extends Phaser.Scene {
             ];
         }
         else if (from === 'victory_boss') {
-            this.add.text(400*window.innerWidth/800, 80*window.innerHeight/600, "🌟 选择你的战斗奖励", { fontSize: '26px', fill: '#fff' }).setOrigin(0.5);
+            this.text = this.add.text(400*window.innerWidth/800, 80*window.innerHeight/600, "🌟 选择你的战斗奖励", { fontSize: '26px', fill: '#fff' }).setOrigin(0.5);
             this.setGold(this.gold + 100);
             options = [
                 { text: "🦴 传说技能（占位）", effect: () => this.log("获得传说技能：神灭一击！") },
@@ -44,7 +44,7 @@ export class EventScene extends Phaser.Scene {
             ];
         }
         else if (from === 'event') {
-            this.add.text(400*window.innerWidth/800, 80*window.innerHeight/600, "🌟 你触发了一个事件", { fontSize: '26px', fill: '#fff' }).setOrigin(0.5);
+            this.text = this.add.text(400*window.innerWidth/800, 80*window.innerHeight/600, "🌟 你触发了一个事件", { fontSize: '26px', fill: '#fff' }).setOrigin(0.5);
             options = [
                 { text: "❤️ 回复 30% 生命", effect: () => this.healPercent(0.3) },
                 { text: "⚔️ 遭遇伏击战！", effect: () => this.scene.start('GameScene', { enemyType: "ambush" }) },
@@ -53,10 +53,12 @@ export class EventScene extends Phaser.Scene {
         }
 
         this.drawGoldDisplay();
+        
+        this.optionstext = [];
 
         // 渲染选项
         options.forEach((opt, idx) => {
-            this.add.text(400*window.innerWidth/800, 160*window.innerHeight/600 + idx * 60*window.innerHeight/600, opt.text, { fontSize: '20px', fill: '#0f0' })
+            this.optionstext[idx] = this.add.text(400*window.innerWidth/800, 160*window.innerHeight/600 + idx * 60*window.innerHeight/600, opt.text, { fontSize: '20px', fill: '#0f0' })
                 .setOrigin(0.5)
                 .setInteractive()
                 .on('pointerdown', () => {
@@ -82,14 +84,14 @@ export class EventScene extends Phaser.Scene {
 
 
     createShop() {
-        this.add.text(400*window.innerWidth/800, 80*window.innerHeight/600, "🛒 商店：选择购买一个物品", { fontSize: '26px', fill: '#fff' }).setOrigin(0.5);
+        this.text = this.add.text(400*window.innerWidth/800, 80*window.innerHeight/600, "🛒 商店：选择购买一个物品", { fontSize: '26px', fill: '#fff' }).setOrigin(0.5);
         // this.add.text(this.scale.width / 2, 140, "🛒 商店：选择购买一个物品", { fontSize: '22px', fill: '#fff' }).setOrigin(0.5);
 
         this.shopItems = [];
         // this.gold = this.registry.get('gold') || 0;
 
         // ✅ 左侧：恢复按钮
-        this.add.text(100*window.innerWidth/800, this.scale.height / 2, '💖 恢复生命/蓝量\n💰 20金币', {
+        this.healButton = this.add.text(100*window.innerWidth/800, this.scale.height / 2, '💖 恢复生命/蓝量\n💰 20金币', {
             fontSize: '18px',
             fill: '#0f0',
             backgroundColor: '#333',
@@ -101,7 +103,7 @@ export class EventScene extends Phaser.Scene {
         this.renderShopItems();
 
         // ✅ 右侧：刷新按钮
-        this.add.text(this.scale.width - 200*window.innerWidth/800, this.scale.height / 2, '🔄 刷新商品\n💰 10金币', {
+        this.refreshButton = this.add.text(this.scale.width - 200*window.innerWidth/800, this.scale.height / 2, '🔄 刷新商品\n💰 10金币', {
             fontSize: '18px',
             fill: '#0f0',
             backgroundColor: '#333',
@@ -110,7 +112,7 @@ export class EventScene extends Phaser.Scene {
         .on('pointerdown', () => this.refreshShop());
         
 
-        this.add.text(this.scale.width / 2, 450*window.innerHeight/600, "返回", { fontSize: "20px", fill: "#fff" })
+        this.backButton = this.add.text(this.scale.width / 2, 450*window.innerHeight/600, "返回", { fontSize: "20px", fill: "#fff" })
             .setOrigin(0.5)
             .setInteractive()
             .on('pointerdown', () => {
@@ -271,5 +273,50 @@ export class EventScene extends Phaser.Scene {
         this.drawGoldDisplay();
         // this.goldText.setText(`💰 ${value}`);
     }
+
+resizeGame() {
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+
+    // 重设 Phaser 场景尺寸
+    this.scale.resize(width, height);
+
+    // 更新标题位置
+    if (this.text) {
+        this.text.setPosition(width / 2, 80 * height / 600);
+    }
+
+    // 更新金币显示位置
+    if (this.goldText) {
+        this.goldText.setPosition(width - 80 * width / 800, 20 * height / 600);
+    }
+
+    // 更新选项文本位置
+    if (this.optionstext && Array.isArray(this.optionstext)) {
+        this.optionstext.forEach((t, i) => {
+            t.setPosition(width / 2, 160 * height / 600 + i * 60 * height / 600);
+        });
+    }
+
+    // 更新商店按钮位置（恢复/刷新/返回）
+    if (this.shopItems && Array.isArray(this.shopItems)) {
+        this.shopItems.forEach((item, i) => {
+            item.setPosition(width / 2, 200 * height / 600 + i * 80 * height / 600);
+        });
+    }
+
+    if (this.healButton) {
+        this.healButton.setPosition(100 * width / 800, height / 2);
+    }
+
+    if (this.refreshButton) {
+        this.refreshButton.setPosition(width - 200 * width / 800, height / 2);
+    }
+
+    if (this.backButton) {
+        this.backButton.setPosition(width / 2, 450 * height / 600);
+    }
+}
+
 
 }

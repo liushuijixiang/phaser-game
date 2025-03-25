@@ -16,6 +16,8 @@ export class LevelSelectScene extends Phaser.Scene {
     create() {
         this.add.text(400*window.innerWidth/800, 50*window.innerHeight/600, '选择你的路径', { fontSize: '28px', fill: '#fff' }).setOrigin(0.5);
 
+        window.addEventListener('resize', () => this.resizeGame(), false);
+
         // 创建地图容器
         this.mapContainer = this.add.container(0, 0);
 
@@ -49,19 +51,40 @@ export class LevelSelectScene extends Phaser.Scene {
         this.updateAvailableNodes(this.mapData[1]); 
 
         this.setupCameraScroll();    // 设置滚动
+        this.scrollThumbup = true;
         this.createScrollBar();
+
+        this.centerOnCurrentNode(); // 👈 添加这一行
     }
 
-    update() {
+   update() {
+        const barY = this.scrollTrack.y;
+        const barHeight = this.scrollTrack.height;
+        const trackTop = barY - barHeight / 2;
+        const trackBottom = barY + barHeight / 2;
+        const maxScroll = this.mapData.length * 120 * window.innerHeight / 600 - this.scale.height;
 
         if (this.scrollThumb && this.scrollTrack) {
-            const barY = this.scrollTrack.y;
-            const barHeight = this.scrollTrack.height;
-
-            const percent = this.cameras.main.scrollY / (this.cameras.main.getBounds().height - this.cameras.main.height);
-            this.scrollThumb.y = barY - barHeight / 2 + percent * barHeight;
+            let percent = this.cameras.main.scrollY / maxScroll;
+            if(this.scrollThumbup){this.scrollThumb.y = trackTop + percent * (trackBottom - trackTop);}
+            else {
+                percent = (this.scrollThumb.y-trackTop)/ (trackBottom - trackTop);
+                this.cameras.main.scrollY = percent * maxScroll;
+            }
         }
+   }
 
+    centerOnCurrentNode() {
+        const current = this.mapData.flat().find(node => node.id === this.currentNode);
+        if (current) {
+            const gapY = 100 * window.innerHeight / 600;
+            const targetY = 150 * window.innerHeight / 600 + current.row * gapY;
+
+            const cameraHeight = this.cameras.main.height;
+            const scrollTarget = targetY - cameraHeight / 2;
+
+            this.cameras.main.scrollY = Phaser.Math.Clamp(scrollTarget, 0, this.mapData.length * gapY - cameraHeight);
+        }
     }
 
     // generateRandomMap() {
@@ -255,8 +278,17 @@ export class LevelSelectScene extends Phaser.Scene {
     setupCameraScroll() {
         // 启用手指拖动或鼠标拖动
         this.input.on('pointermove', (pointer) => {
-            if (pointer.isDown) {
+            if (pointer.isDown && this.scrollThumbup) {
                 this.cameras.main.scrollY -= (pointer.velocity.y / 10*window.innerHeight/600);
+            }else if(pointer.isDown && this.scrollThumb) {
+                const barHeight = window.innerHeight - 100;
+                const barX = this.scale.width - 50;
+                const barY = window.innerHeight / 2;
+                const trackTop = barY - barHeight / 2;
+                const trackBottom = barY + barHeight / 2;
+                this.scrollThumbup = false;
+                this.scrollThumb.setFillStyle(0x888888);
+                this.scrollThumb.y = Phaser.Math.Clamp(pointer.y, trackTop, trackBottom);
             }
         });
 
@@ -270,18 +302,55 @@ export class LevelSelectScene extends Phaser.Scene {
     }
 
     createScrollBar() {
-        const barHeight = window.innerHeight - 100*window.innerHeight/600;
-        const barX = this.scale.width - 50*window.innerWidth/800;
-        const barY = window.innerHeight/2;
+        const barHeight = window.innerHeight - 100;
+        const barX = this.scale.width - 50;
+        const barY = window.innerHeight / 2;
 
-        // 滚动条背景
-        this.scrollTrack = this.add.rectangle(barX, barY, 10, barHeight, 0x444444).setOrigin(0.5).setScrollFactor(0);
+        // 滑道（背景条）
+        this.scrollTrack = this.add.rectangle(barX, barY, 10, barHeight, 0x444444)
+            .setOrigin(0.5)
+            .setScrollFactor(0);
 
-        // 滚动条滑块
-        this.scrollThumb = this.add.rectangle(barX, barY, 14, 40, 0xffffff).setOrigin(0.5).setInteractive({ draggable: true }).setScrollFactor(0);
-        this.scrollThumb.setInteractive();
+        // 滑块
+        this.scrollThumb = this.add.rectangle(barX, barY, 14, 40, 0xffffff)
+            .setOrigin(0.5)
+            .setInteractive({ draggable: true })
+            .setScrollFactor(0);
+
+            this.input.setDraggable(this.scrollThumb);
+
+        // 滑动时处理
+        // this.input.on('drag', (pointer, gameObject, dragX, dragY) => {
+        //     if (gameObject === this.scrollThumb) {
+        //         const trackTop = barY - barHeight / 2;
+        //         const trackBottom = barY + barHeight / 2;
+
+        //         // 🟡 限制滑块在滑道内
+        //         const clampedY = Phaser.Math.Clamp(dragY, trackTop, trackBottom);
+        //         gameObject.y = clampedY;
+
+        //     }
+        // });
+
+        // 滑块按下变色，抬起恢复
+        this.scrollThumb.on('pointerdown', (pointer) => {
+            const trackTop = barY - barHeight / 2;
+            const trackBottom = barY + barHeight / 2;
+            this.scrollThumbup = false;
+            this.scrollThumb.setFillStyle(0x888888);
+            this.scrollThumb.y = Phaser.Math.Clamp(pointer.y, trackTop, trackBottom);
+        });
+
+        window.addEventListener('mouseup', () => {
+            if (this.scrollThumb && !this.scrollThumbup) {
+                this.scrollThumbup = true;
+                this.scrollThumb.setFillStyle(0xffffff);
+            }
+        });
 
     }
+
+
 
     drawGoldDisplay() {
         const gold = this.registry.get("gold") || 0;
@@ -370,4 +439,60 @@ export class LevelSelectScene extends Phaser.Scene {
                type === "boss" ? "BOSS" :
                "起点";
     }
+    
+
+    resizeGame() {
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+
+        // 1. 更新 Phaser 的画布尺寸
+        this.scale.resize(width, height);
+
+        // 2. 设置摄像机边界，适配新窗口大小
+        this.cameras.main.setBounds(0, 0, width, this.mapData.length * 120 * height / 600);
+
+        // 3. 更新金币文本位置
+        if (this.goldText) {
+            this.goldText.setPosition(this.scale.width - 80 * width / 800, 20 * height / 600);
+        }
+
+        // 4. 重新定位滚动条
+        const barHeight = height - 100 * height / 600;
+        const barX = width - 50 * width / 800;
+        const barY = height / 2;
+
+        if (this.scrollTrack) {
+            this.scrollTrack.setSize(10, barHeight);
+            this.scrollTrack.setPosition(barX, barY);
+        }
+
+        if (this.scrollThumb) {
+            this.scrollThumb.setPosition(barX, barY);
+        }
+
+        // 5. ✅ 重新布局地图节点 & 连接线
+        const startY = 150 * height / 600;
+        const gapY = 100 * height / 600;
+        this.nodes.forEach(button => {
+            const node = button.nodeData;
+            const row = this.mapData[node.row];
+            const xOffset = 400 - (row.length * 120) / 2;
+            const nodeX = (xOffset + node.col * 120) * width / 800;
+            const nodeY = startY + node.row * gapY;
+            button.setPosition(nodeX, nodeY);
+        });
+
+        // 6. 重新绘制连线
+        this.mapContainer.removeAll(true); // 清空所有地图内容
+        this.nodes = [];
+        this.createMap(); // 重新绘制地图结构（节点 + 连线）
+        this.updateAvailableNodes();
+        this.highlightNodes(); // ✅ 必须要重新执行一次
+
+        // 7. 回到当前节点视角（不然可能偏移）
+        this.centerOnCurrentNode();
+
+    }
+
+
 }

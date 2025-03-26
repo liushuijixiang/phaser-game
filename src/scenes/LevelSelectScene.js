@@ -43,6 +43,17 @@ export class LevelSelectScene extends Phaser.Scene {
             this.currentNode = 0;
         }
 
+        // ✅ 同理，当前楼层也保存在 registry 中
+        const floor = this.registry.get("floor");
+        if (floor === undefined) {
+            const floor = 1
+            this.registry.set("floor", floor);
+            this.floor = floor;
+        } else {
+            this.floor = floor;
+        }
+
+
         this.createMap(); // ✨渲染地图
 
         this.highlightNodes(); // ✨设置颜色
@@ -55,6 +66,11 @@ export class LevelSelectScene extends Phaser.Scene {
         this.createScrollBar();
 
         this.centerOnCurrentNode(); // 👈 添加这一行
+    }
+
+    shutdown() {
+        // 离开场景时移除监听
+        window.removeEventListener('resize', this._resizeHandler);
     }
 
    update() {
@@ -196,6 +212,7 @@ export class LevelSelectScene extends Phaser.Scene {
             const id = button.nodeData.id;
             if (id === this.currentNode) {
                 button.setTint(0xffffff); // 当前
+                button.setAlpha(1);
             } else if (this.availableNodes.has(id)) {
                 button.setTint(0xaaaaaa); // 可选
             } else {
@@ -371,10 +388,15 @@ export class LevelSelectScene extends Phaser.Scene {
         this.currentNode = node.id;
         this.registry.set("returnNode", this.currentNode); // 记录返回位置
         this.updateAvailableNodes();
+        this.highlightNodes();
 
         if (node.type === "fight" || node.type === "elite" || node.type === "boss") {
             this.generateMonster(node.type);
             this.scene.start('GameScene', { enemyType: node.type });
+            if(node.type === "boss") {
+                this.registry.set("returnNode", undefined);
+                this.registry.set("floor", this.floor+1);
+            }
         } else if (node.type === "event") {
             this.scene.start('EventScene', { from: 'event' });
         } else if (node.type === "shop") {
@@ -385,15 +407,20 @@ export class LevelSelectScene extends Phaser.Scene {
 
     /** 生成怪物 */
     generateMonster(type) {
+        const current = this.mapData.flat().find(node => node.id === this.currentNode);
+        let hp =  type === "boss" ? Phaser.Math.Between(3*Math.floor(1+Math.pow(current.row, 2)/15)*30,3*Math.floor(1+Math.pow(current.row, 2)/15)*30+150) : type === "elite" ? Phaser.Math.Between(current.row*2*Math.floor(1+current.row/15)*30,2*Math.floor(1+Math.pow(current.row, 2)/15)*30+50) : Phaser.Math.Between(30*Math.floor(1+current.row/15),30*Math.floor(1+Math.pow(current.row, 2)/15)+50);
+        let attack = type === "boss" ? Phaser.Math.Between(10*Math.floor(1+Math.pow(current.row, 2)/15)+5,10*Math.floor(1+Math.pow(current.row, 2)/15)+5) : type === "elite" ? Phaser.Math.Between(current.row*6*Math.floor(1+current.row/15)+1,6*Math.floor(1+Math.pow(current.row, 2)/15)+15) : Phaser.Math.Between(3*Math.floor(1+current.row/15)+1,3*Math.floor(1+current.row/15)+5);
+        console.log(`node is ${Math.pow(current.row, 2)} and floor is ${this.floor} and hp and attack is ${hp} and ${attack}`);
         let monsterData = {
-            hp: type === "boss" ? 500 : type === "elite" ? 200 : 100,
-            maxHp: type === "boss" ? 500 : type === "elite" ? 200 : 100,
-            attack: type === "boss" ? 50 : type === "elite" ? 30 : 20,
+            hp: hp*this.floor,
+            maxHp: hp*this.floor,
+            attack: attack*this.floor,
             defense: type === "boss" ? 10 : type === "elite" ? 5 : 2,
+
             mp: 50,
             maxMp: 50,
             // attack: 30,
-            speed: 100,
+            speed: 100 + this.floor,
             shield: 0,
             armor: 0
         };
@@ -419,16 +446,16 @@ export class LevelSelectScene extends Phaser.Scene {
         if (!current || !current.connections) return;
         // 将当前节点连接的目标 id 加入 availableNodes
         current.connections.forEach(id => this.availableNodes.add(id));
-        this.highlightCurrentNode();
+        this.highlightNodes();
     }
 
 
-    /** 高亮当前所在节点 */
-    highlightCurrentNode() {
-        this.nodes.forEach(button => {
-            button.setAlpha(button.nodeData.id === this.currentNode ? 1 : 0.5);
-        });
-    }
+    // /** 高亮当前所在节点 */
+    // highlightCurrentNode() {
+    //     this.nodes.forEach(button => {
+    //         button.setAlpha(button.nodeData.id === this.currentNode ? 1 : 0.5);
+    //     });
+    // }
 
     /** 获取不同类型的节点文字 */
     getNodeText(type) {
@@ -449,7 +476,10 @@ export class LevelSelectScene extends Phaser.Scene {
         this.scale.resize(width, height);
 
         // 2. 设置摄像机边界，适配新窗口大小
-        this.cameras.main.setBounds(0, 0, width, this.mapData.length * 120 * height / 600);
+        if(this.cameras){
+            this.cameras.main.setBounds(0, 0, width, this.mapData.length * 120 * height / 600);
+        }
+        
 
         // 3. 更新金币文本位置
         if (this.goldText) {
@@ -490,7 +520,7 @@ export class LevelSelectScene extends Phaser.Scene {
         this.highlightNodes(); // ✅ 必须要重新执行一次
 
         // 7. 回到当前节点视角（不然可能偏移）
-        this.centerOnCurrentNode();
+        // this.centerOnCurrentNode();
 
     }
 

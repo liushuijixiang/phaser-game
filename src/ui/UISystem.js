@@ -70,7 +70,6 @@ export class UISystem {
     // /** 更新 UI */
     updateUI() {
         // this.playerInfo.setText(this.getPlayerInfo());
-        console.log(`update ui 1`);
         if (this.pauseButton) {
             this.pauseButton.setPosition(400*window.innerWidth/800, 20*window.innerHeight/600);
             this.pauseButton.setScale(window.innerWidth/800, window.innerHeight/600);

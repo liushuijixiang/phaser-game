@@ -29,28 +29,42 @@ export class MenuScene extends Phaser.Scene {
         window.addEventListener('resize', () => this.resizeGame(), false);
         this.resizeGame(); // 初始化时调用一次
 
+        //测试用
+        this.registry.set('gold', 10000);
+
         // ✅ 初始化数据
+        let hp = Phaser.Math.Between(1,100)+Phaser.Math.Between(50,100);
+        let mp = Phaser.Math.Between(1,100)+Phaser.Math.Between(50,100);
+        let attack = Phaser.Math.Between(3,8)+Phaser.Math.Between(5,10);
         this.registry.set('playerData', {
-            hp: 100,
-            maxHp: 100,
-            mp: 50,
-            maxMp: 50,
-            attack: 30,
+            hp: hp,
+            maxHp: hp,
+            mp: mp,
+            maxMp: mp,
+            attack: attack,
             speed: 100,
             shield: 0,
             armor: 0
         });
 
+        hp = Phaser.Math.Between(1,50);
+        mp = Phaser.Math.Between(1,10);
+        attack = Phaser.Math.Between(1,5);
         this.registry.set('monsterData', {
-            hp: 100,
-            maxHp: 100,
-            mp: 50,
-            maxMp: 50,
-            attack: 30,
+            hp: hp,
+            maxHp: hp,
+            mp: mp,
+            maxMp: mp,
+            attack: attack,
             speed: 100,
             shield: 0,
             armor: 0
         });
+    }
+
+    shutdown() {
+        // 离开场景时移除监听
+        window.removeEventListener('resize', this._resizeHandler);
     }
 
     resizeGame() {

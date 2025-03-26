@@ -35,9 +35,6 @@ export class GameScene extends Phaser.Scene {
         // 创建角色
         this.monster = new Monster(this, window.innerWidth*7/8, window.innerHeight*7/8, 'dude', monsterData);
 
-        // 添加技能
-        this.player.skills.push(new HealSkill());
-
 
         // 让角色与地面碰撞
         // this.physics.add.collider(this.player.sprite, platforms);
@@ -70,6 +67,11 @@ export class GameScene extends Phaser.Scene {
 
         // **测试：战斗日志**
         // this.ui.addBattleLog("⚔️ 战斗开始！");
+    }
+
+    shutdown() {
+        // 离开场景时移除监听
+        window.removeEventListener('resize', this._resizeHandler);
     }
 
     resizeGame() {

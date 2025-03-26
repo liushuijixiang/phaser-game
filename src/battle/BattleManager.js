@@ -1,14 +1,11 @@
-// import { Player } from '../classes/Player.js';
-// import { SkillManager } from '../skills/SkillManager.js';
-// import { UISystem } from '../ui/UISystem.js';
 
 export class BattleManager {
     constructor(scene, player1, player2, uiSystem, enemyType = "fight") {
         this.scene = scene;  // ✅ 确保 scene 被正确赋值
         this.player1 = player1;
         this.player2 = player2;
+
         this.turnQueue = []; // 行动顺序
-        this.tempStats = new Map(); // 存储临时属性
         this.enemyType = enemyType; // 保存敌人类型
 
         //全局ui
@@ -54,18 +51,14 @@ export class BattleManager {
         console.log("⚔ 战斗开始!");
         
 
-        // 1️⃣ 初始化临时变量
-        this.initTempStats(this.player1);
-        this.initTempStats(this.player2);
+        //  触发战斗开始技能
+        this.triggerBattleStartEffects(this.player1,this.player2);
+        this.triggerBattleStartEffects(this.player2,this.player1);
 
-        // 2️⃣ 触发战斗开始技能
-        this.triggerBattleStartEffects(this.player1);
-        this.triggerBattleStartEffects(this.player2);
-
-        // 3️⃣ 计算攻击顺序
+        //  计算攻击顺序
         this.calculateTurnOrder();
 
-        // 4️⃣ 开始回合循环
+        //  开始回合循环
         // this.nextTurn();
         this.updateAllUI();
 
@@ -77,19 +70,6 @@ export class BattleManager {
                 this.nextTurn();
                 this.updateAllUI();
             }
-        });
-    }
-
-    /** 初始化战斗临时变量 */
-    initTempStats(player) {
-        this.tempStats.set(player, {
-            tempArmor: 0,          // 临时护甲
-            tempShield: 0,         // 临时护盾
-            tempAttack: 0,         // 临时攻击力
-            damageBoost: 1,        // 伤害提升倍率（默认1倍）
-            defenseDebuff: 0,      // 防御降低
-            nextAttackBonus: null,  // 下一次攻击的特殊效果
-            nextDefenseBonus: null  // 下一次防御的特殊效果
         });
     }
 
@@ -112,7 +92,7 @@ export class BattleManager {
         let defender = this.turnQueue[0];
 
         // 🔹 **触发回合开始技能**
-        this.triggerTurnStartEffects(attacker);
+        this.triggerTurnStartEffects(attacker,defender);
         // this.triggerTurnStartEffects(this.player2);
 
         console.log(`🎯 ${attacker.name} 发动攻击!`);
@@ -121,38 +101,48 @@ export class BattleManager {
         // 交换行动顺序
         this.turnQueue.push(attacker);
 
-        // 下一回合
+        // 下一回合,回合内状态清除
+        this.player1.reset();
+        this.player2.reset();
+
         // setTimeout(() => this.nextTurn(), 1);
     }
 
     /** 执行战斗开始时技能 */
-    triggerBattleStartEffects(player) {
-        player.skills.forEach(skill => {
+    triggerBattleStartEffects(player1,player2) {
+        player1.skills.forEach(skill => {
+            if (typeof skill.reset === 'function') {
+                skill.reset(); // ⬅️ 重置“只能触发一次”的技能
+            }
+
             if (skill.type === "onBattleStart") {
-                skill.activate(player);
+                skill.activate(player1,player2);
             }
         });
     }
 
     /** 执行回合开始时技能 */
-    triggerTurnStartEffects(player) {
-        player.skills.forEach(skill => {
+    triggerTurnStartEffects(player1,player2) {
+        player1.skills.forEach(skill => {
             if (skill.type === "onTurnStart") {
-                skill.activate(player);
+                skill.activate(player1,player2);
             }
         });
     }
 
+
+
     /** 执行攻击逻辑 */
     executeAttack(attacker, defender) {
-        let attackerTemp = this.tempStats.get(attacker);
-        let defenderTemp = this.tempStats.get(defender);
+
+        //攻击计数+1
+        attacker.attackCount += 1;
 
         // 计算攻击力（包含临时加成）
-        let attackPower = attacker.attack + attackerTemp.tempAttack;
+        let attackPower = attacker.attack + attacker.tempAttack;
 
         // 计算伤害倍率（包含临时伤害提升）
-        let damageMultiplier = attackerTemp.damageBoost;
+        let damageMultiplier = attacker.damageBoost;
 
         // // 计算是否闪避
         // if (this.checkDodge(defender)) {
@@ -167,10 +157,17 @@ export class BattleManager {
         // }
 
         // 计算最终伤害
-        let damage = this.calculateDamage(attacker, defender, attackPower, damageMultiplier, defenderTemp.defenseDebuff);
+        let damage = this.calculateDamage(attacker, defender, attackPower, damageMultiplier, defender.defenseBoost);
+
+        
 
         // 处理护盾
         damage = this.applyShield(defender, damage);
+
+
+        // 处理减伤技能
+        damage = this.triggerDefendEffects(defender,damage);
+
 
         // 扣血
         defender.takeDamage(damage);
@@ -184,9 +181,27 @@ export class BattleManager {
         // 处理濒死效果
         this.checkNearDeath(defender);
 
-        // **下一次攻击加成用完后清除**
-        attackerTemp.nextAttackBonus = null;
+        
+
     }
+
+    triggerDefendEffects(player, damage) {
+        let finalDamage = damage;
+
+        player.skills.forEach(skill => {
+            if (skill.type === "onDamageTaken") {
+                const result = skill.activate(player, finalDamage);
+                // 如果技能返回有效值，更新 finalDamage
+                if (typeof result === 'number') {
+                    finalDamage = result;
+                }
+            }
+        });
+
+        return finalDamage;
+    }
+
+    
 
     /** 计算伤害 */
     calculateDamage(attacker, defender, baseAttack, multiplier, defenseDebuff) {
@@ -203,10 +218,9 @@ export class BattleManager {
 
     /** 处理护盾伤害 */
     applyShield(defender, damage) {
-        let defenderTemp = this.tempStats.get(defender);
-        if (defenderTemp.tempShield > 0) {
-            let absorbed = Math.min(defenderTemp.tempShield, damage);
-            defenderTemp.tempShield -= absorbed;
+        if (defender.shield > 0) {
+            let absorbed = Math.min(defender.shield, damage);
+            defender.shield -= absorbed;
             damage -= absorbed;
             console.log(`🛡 ${defender.name} 的临时护盾吸收了 ${absorbed} 伤害!`);
         }
@@ -249,8 +263,8 @@ export class BattleManager {
     checkNearDeath(player) {
         if (player.hp <= 0) {
             player.skills.forEach(skill => {
-                if (skill.type === "nearDeath") {
-                    skill.activate();
+                if (skill.type === "onFatalDamage") {
+                    skill.activate(player);
                 }
             });
         }
@@ -265,8 +279,8 @@ export class BattleManager {
             console.log(`🎉 ${this.player1.name} 获胜!`);
             this.player2.gameover = true;
             let playerData = this.scene.registry.get('playerData');
-            playerData.hp = this.player1.hp;
-            playerData.mp = this.player1.mp;
+            playerData.hp = Math.min(this.player1.hp,this.player1.maxHp);
+            playerData.mp = Math.min(this.player1.mp,this.player1.maxMp);
             this.scene.registry.set('playerData', playerData);
             let fromType = {
                 fight: 'victory_normal',
@@ -303,12 +317,10 @@ export class BattleManager {
             }).setOrigin(0.5).setInteractive();
 
             this.restart2Button.on('pointerdown', () => {
-                let mapData = undefined;
-                let returnNode = undefined;
-                let gold = undefined;
-                this.scene.registry.set('mapData', mapData);
-                this.scene.registry.set('returnNode', returnNode);
-                this.scene.registry.set('gold', gold);
+                this.scene.registry.set('mapData', undefined);
+                this.scene.registry.set('returnNode', undefined);
+                this.scene.registry.set("floor", undefined);
+                this.scene.registry.set('gold', undefined);
                 this.scene.scene.start('MenuScene'); 
             });
 

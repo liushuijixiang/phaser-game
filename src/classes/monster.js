@@ -25,9 +25,24 @@ export class Monster {
         this.attack = monsterData.attack;
         this.speed = monsterData.speed;
 
+        this.critChance = 0;
+        this.critDamage = 0;
+
+        //临时属性
+        this.tempMaxHp = 0;
+        this.tempMaxMp = 0;
+        this.tempAttack = 0;
+        this.attackCount = 0;
+        this.tempArmor = 0;
+        this.tempShield = 0;
+        this.damageBoost = 1;
+        this.defenseBoost = 1;
+        this.buff = [];
 
 
-        this.skills = []; // 存储技能
+
+        this.skills = monsterData.skills ? playerData.skills : [];
+
         // this.skillManager = new SkillManager(this); // 管理技能
 
         // UI 位置 & 尺寸
@@ -104,20 +119,22 @@ export class Monster {
             this.scene.tweens.add({
                 targets: this,
                 tempHp: Math.max(this.hp,0), // 让 tempHp 缓慢减小
-                duration: 600, // 0.8 秒
+                duration: 300, // 0.8 秒
                 ease: 'Linear',
                 onUpdate: () => {
-                    let lostWidth = ((this.tempHp - Math.max(this.hp,0)) / this.maxHp) * this.barWidth;
+                    let lostWidth = ((this.tempHp - Math.max(this.hp,0)) / (this.maxHp+this.tempMaxHp)) * this.barWidth;
                     this.hpLostBar.clear();
                     if (lostWidth > 0) {
                         this.hpLostBar.fillStyle(0x7a3b3b, 1); // 暗红色
-                        this.hpLostBar.fillRect(this.uiX + (Math.max(this.hp,0) / this.maxHp) * this.barWidth, this.uiY, lostWidth, this.barHeight);
+                        this.hpLostBar.fillRect(this.uiX + (Math.max(this.hp,0) / (this.maxHp+this.tempMaxHp)) * this.barWidth, this.uiY, lostWidth, this.barHeight);
                     }
                 }
             });
+            
 
             // **更新血量数值**
-            this.hpText.setText(`${this.hp} / ${this.maxHp}`);
+            if(this.hpText && this.tempMaxHp === 0){this.hpText.setText(`${this.hp} / ${this.maxHp}`);}
+            else if(this.hpText){this.hpText.setText(`${this.hp} / ${this.maxHp}+${this.tempMaxHp}`);}
 
             // **更新护盾数值**
             if (this.shield > 0) {
@@ -131,7 +148,8 @@ export class Monster {
                 this.shieldBar.fillStyle(0xC0C0C0, 1); // 灰白色护盾条
                 this.shieldBar.fillRect(this.uiX + hpWidth, this.uiY, shieldWidth, this.barHeight);
                 // **显示数值**
-                this.hpText.setText(`${this.hp}+${this.shield} / ${this.maxHp}`);
+                if(this.hpText && this.tempMaxHp === 0) {this.hpText.setText(`${this.hp}+${this.shield} / ${this.maxHp}`);}
+                else if(this.hpText){this.hpText.setText(`${this.hp}+${this.shield} / ${this.maxHp}+${this.tempMaxHp}`);}
             }else
             {
                 this.shieldBar.clear();
@@ -139,7 +157,7 @@ export class Monster {
 
 
 
-            let mpPercent = this.mp / this.maxMp;
+            let mpPercent = Math.max(this.mp,0) / (this.maxMp + this.tempMaxMp);
             let currentMpWidth = Math.max(mpPercent * this.barWidth, 0);
 
             // **更新蓝条**
@@ -148,7 +166,8 @@ export class Monster {
             this.mpBar.fillRect(this.uiX, this.uiY + 30*window.innerHeight/600, currentMpWidth, this.barHeight);
 
             // **更新蓝量数值**
-            this.mpText.setText(`${this.mp} / ${this.maxMp}`);
+            if(this.mpText && this.tempMaxMp === 0){this.mpText.setText(`${this.mp} / ${this.maxMp}`);}
+            else if(this.mpText){this.mpText.setText(`${this.mp} / ${this.maxMp}+${this.tempMaxMp}`);}
         }
     }
 
@@ -298,6 +317,15 @@ export class Monster {
     gainShield(amount) {
         this.shield = Math.min(this.shield + amount, this.maxShield);
         // this.updateUI();
+    }
+
+    // 回合状态清除
+    reset() {
+        this.tempAttack = 0;
+        this.tempArmor = 0;
+        this.tempShield = 0;
+        this.damageBoost = 1;
+        this.defenseBoost = 1;
     }
 }
 

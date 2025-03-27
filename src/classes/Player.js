@@ -271,6 +271,7 @@ export class Player {
         //     this.tempHp = oldHp; // 初始化临时血量
         // }
         this.hp = Math.min(this.hp + amount, this.maxHp);
+        
         // let oldHp = this.hp;
 
         // this.updateUI();

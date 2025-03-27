@@ -93,13 +93,13 @@ export class LevelSelectScene extends Phaser.Scene {
     centerOnCurrentNode() {
         const current = this.mapData.flat().find(node => node.id === this.currentNode);
         if (current) {
-            const gapY = 100 * window.innerHeight / 600;
-            const targetY = 150 * window.innerHeight / 600 + current.row * gapY;
+            const stepY = 100 * window.innerHeight / 600;
 
-            const cameraHeight = this.cameras.main.height;
-            const scrollTarget = targetY - cameraHeight / 2;
+            // 假设起始位置是 0，第 0 层 scrollY 应为 0，第 1 层为 1 * stepY ...
+            const scrollTarget = current.row * stepY;
 
-            this.cameras.main.scrollY = Phaser.Math.Clamp(scrollTarget, 0, this.mapData.length * gapY - cameraHeight);
+            // 镜头平移
+            this.cameras.main.scrollY = scrollTarget;
         }
     }
 
@@ -296,7 +296,17 @@ export class LevelSelectScene extends Phaser.Scene {
         // 启用手指拖动或鼠标拖动
         this.input.on('pointermove', (pointer) => {
             if (pointer.isDown && this.scrollThumbup) {
-                this.cameras.main.scrollY -= (pointer.velocity.y / 10*window.innerHeight/600);
+                if (this.lastPointerY && this.lastPointerY !== null) {
+                    const deltaY = pointer.y - this.lastPointerY;
+
+                    // 平滑移动（手动控制滑动灵敏度）
+                    let smoothedVelocity = Phaser.Math.Clamp(deltaY, -30, 30); // 限制最大移动速度
+                    this.cameras.main.scrollY -= smoothedVelocity;
+
+                    this.lastPointerY = pointer.y;
+                }else {
+                    this.lastPointerY = pointer.y;
+                }
             }else if(pointer.isDown && this.scrollThumb) {
                 const barHeight = window.innerHeight - 100;
                 const barX = this.scale.width - 50;
@@ -362,6 +372,7 @@ export class LevelSelectScene extends Phaser.Scene {
             if (this.scrollThumb && !this.scrollThumbup) {
                 this.scrollThumbup = true;
                 this.scrollThumb.setFillStyle(0xffffff);
+                this.lastPointerY = null;
             }
         });
 

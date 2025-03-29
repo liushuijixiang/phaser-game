@@ -1,4 +1,5 @@
 import { BattleLog } from '../battle/BattleLog.js';
+import { BattleStats } from '../battle/BattleLog.js';
 
 
 
@@ -24,36 +25,11 @@ export class BattleManager {
 
         this.battleLog = BattleLog.getLogs();
         BattleLog.clear(); // 开始前清空旧日志
+        BattleStats.clear(); // 开始前清空旧日志
 
-        this.battleStats = {
-            [player1.name]: this.createEmptyStats(),
-            [player2.name]: this.createEmptyStats()
-        };
+        BattleStats.init(player1); // 初始化玩家
+        BattleStats.init(player2); // 初始化敌人
 
-
-
-
-    }
-
-    createEmptyStats() {
-        return {
-            damageDealt: 0,         // 总伤害
-            damageTaken: 0,         // 总承伤
-            healingDone: 0,         // 总治疗
-            shieldAbsorbed: 0,      // 护盾吸收总量
-            armorBlocked: 0,        // 护甲减免总量
-            normalAttack: 0,        // 普通攻击次数
-            skillUsage: {}          // { 技能名: 次数 }
-        };
-    }
-
-    logSkillUsage(player, skillName) {
-        const stats = this.battleStats[player.name];
-        if (!stats.skillUsage[skillName]) {
-            stats.skillUsage[skillName] = 1;
-        } else {
-            stats.skillUsage[skillName]++;
-        }
     }
 
 
@@ -77,13 +53,13 @@ export class BattleManager {
             this.restart2Button.setScale(window.innerWidth/800, window.innerHeight/600);
         }
         if (this.logBtn) {
-            this.logBtn.setPosition(400*window.innerWidth/800, 370*window.innerHeight/600);
-            this.logBtn.setScale(window.innerWidth/800, window.innerHeight/600);
+            this.logBtn.setPosition(100*window.innerWidth/800, 470*window.innerHeight/600);
+            // this.logBtn.setScale(window.innerWidth/800, window.innerHeight/600);
         }
-        if (this.nextBtn) {
-            this.nextBtn.setPosition(400*window.innerWidth/800, 270*window.innerHeight/600);
-            this.nextBtn.setScale(window.innerWidth/800, window.innerHeight/600);
-        }
+        // if (this.nextBtn) {
+        //     this.nextBtn.setPosition(400*window.innerWidth/800, 270*window.innerHeight/600);
+        //     this.nextBtn.setScale(window.innerWidth/800, window.innerHeight/600);
+        // }
     }
 
     /** 🎯 让战斗暂停 */
@@ -171,7 +147,7 @@ export class BattleManager {
 
             if (skill.type === "onBattleStart") {
                 skill.activate(player1,player2);
-                if(skill.canUse){this.logSkillUsage(player1, skill.name);} // ⬅️ 添加统计
+                // if(skill.canUse){this.logSkillUsage(player1, skill.name);} // ⬅️ 添加统计
             }
 
             if (typeof skill.reset === 'function') {
@@ -186,7 +162,7 @@ export class BattleManager {
         player1.skills.forEach(skill => {
             if (skill.type === "onTurnStart") {
                 skill.activate(player1,player2);
-                if(skill.canUse){this.logSkillUsage(player1, skill.name);} // ⬅️ 添加统计
+                // if(skill.canUse){this.logSkillUsage(player1, skill.name);} // ⬅️ 添加统计
             }
         });
     }
@@ -196,7 +172,7 @@ export class BattleManager {
         player.skills.forEach(skill => {
             if (skill.type === "onBattleEnd") {
                 if(player.hp > 0){skill.activate(player);}
-                if(skill.canUse){this.logSkillUsage(player, skill.name);} // ⬅️ 添加统计
+                // if(skill.canUse){this.logSkillUsage(player, skill.name);} // ⬅️ 添加统计
             }
         });
     }
@@ -249,9 +225,9 @@ export class BattleManager {
         defender.takeDamage(damage);
 
         
-        this.battleStats[attacker.name].damageDealt += damage;
-        this.battleStats[defender.name].damageTaken += damage;
-        this.battleStats[attacker.name].normalAttack += 1;
+        BattleStats.addDamageDealt(attacker, damage);
+        BattleStats.addDamageTaken(defender, damage);
+        BattleStats.addNormalAttack(attacker);
 
         BattleLog.write(`   ${attacker.name} 普通攻击造成 ${damage} 点伤害`);
 
@@ -302,7 +278,7 @@ export class BattleManager {
             damage -= absorbed;
             console.log(`   🛡 ${defender.name} 的临时护盾吸收了 ${absorbed} 伤害!`);
             BattleLog.write(`   🛡 ${defender.name} 的临时护盾吸收了 ${absorbed} 伤害!`);
-            this.battleStats[defender.name].shieldAbsorbed += absorbed;
+            BattleStats.addShieldAbsorbed(defender,absorbed);
         }
         return damage;
     }
@@ -315,7 +291,7 @@ export class BattleManager {
         let finaldamage = damage * (1 - armorReduction);
         console.log(`   🛡 ${defender.name} 的护甲减免了 ${damage - Math.floor(finaldamage)} 伤害!`);
         BattleLog.write(`   🛡 ${defender.name} 的护甲减免了 ${damage - Math.floor(finaldamage)} 伤害!`);
-        this.battleStats[defender.name].armorBlocked += Math.floor(damage - Math.floor(finaldamage));
+        BattleStats.addArmorBlocked(defender,Math.floor(damage - Math.floor(finaldamage)));
         return Math.floor(finaldamage);
     }
 
@@ -326,7 +302,7 @@ export class BattleManager {
             attacker.hp = Math.min(attacker.hp + heal, attacker.maxHp);
             console.log(`   🩸 ${attacker.name} 吸血 ${heal} 点!`);
             BattleLog.write(`   🩸 ${attacker.name} 吸血 ${heal} 点!`);
-            this.battleStats[attacker].healingDone += healAmount;
+            BattleStats.addHealingDone(attacker,healAmount);
         }
     }
 
@@ -383,23 +359,23 @@ export class BattleManager {
                 boss: 'victory_boss',
                 ambush: 'victory_normal'
             }[this.enemyType] || 'victory_normal';
-            // this.showBattleLogWithDOM();
-            // this.scene.scene.start('EventScene', { from: fromType });
+            this.logBattle();
+            this.scene.scene.start('EventScene', { from: fromType });
             // this.scene.scene.start('LevelSelectScene'); // 切换到游戏场景
 
-            this.logBtn = this.scene.add.text(400*window.innerWidth/800, 370*window.innerHeight/600, '📜 查看战斗日志', {
-                fontSize: '24px',
-                fill: '#0f0',
-                backgroundColor: '#333',
-                padding: { left: 10, right: 10, top: 5, bottom: 5 }
-            }).setOrigin(0.5).setInteractive();
+            // this.logBtn = this.scene.add.text(400*window.innerWidth/800, 370*window.innerHeight/600, '📜 查看战斗日志', {
+            //     fontSize: '24px',
+            //     fill: '#0f0',
+            //     backgroundColor: '#333',
+            //     padding: { left: 10, right: 10, top: 5, bottom: 5 }
+            // }).setOrigin(0.5).setInteractive();
 
-            this.nextBtn = this.scene.add.text(400*window.innerWidth/800, 270*window.innerHeight/600, '➡️ 下一步', {
-                fontSize: '24px',
-                fill: '#0f0',
-                backgroundColor: '#333',
-                padding: { left: 10, right: 10, top: 5, bottom: 5 }
-            }).setOrigin(0.5).setInteractive();
+            // this.nextBtn = this.scene.add.text(400*window.innerWidth/800, 270*window.innerHeight/600, '➡️ 下一步', {
+            //     fontSize: '24px',
+            //     fill: '#0f0',
+            //     backgroundColor: '#333',
+            //     padding: { left: 10, right: 10, top: 5, bottom: 5 }
+            // }).setOrigin(0.5).setInteractive();
 
             // const logBtn = this.scene.add.text(centerX, baseY, '📜 查看战斗日志', {
             //     fontSize: '20px',
@@ -415,24 +391,35 @@ export class BattleManager {
             //     padding: { x: 10, y: 5 }
             // }).setOrigin(0.5).setInteractive();
 
-            this.logBtn.on('pointerdown', () => {
-                this.showBattleLogWithDOM();
-            });
+            // this.logBtn.on('pointerdown', () => {
+            //     this.showBattleLogWithDOM();
+            // });
 
-            this.nextBtn.on('pointerdown', () => {
-                this.logBtn.destroy();
-                this.nextBtn.destroy();
-                this.scene.scene.start('EventScene', { from: fromType });
-            });
+            // this.nextBtn.on('pointerdown', () => {
+            //     this.logBtn.destroy();
+            //     this.nextBtn.destroy();
+            //     this.scene.scene.start('EventScene', { from: fromType });
+            // });
 
         } else if (this.player2.hp > 0) {
             console.log(`🎉 ${this.player2.name} 获胜!`);
             BattleLog.write(`   🎉 ${this.player2.name} 获胜!`);
             this.player1.gameover = true;
-            this.gameover1 = this.scene.add.rectangle(400*window.innerWidth/800, 300*window.innerHeight/600, 300*window.innerWidth/600, 200*window.innerHeight/600, 0x000000, 0.8); // 半透明黑色背景
+            this.gameover1 = this.scene.add.rectangle(450*window.innerWidth/800, 300*window.innerHeight/600, 350*window.innerWidth/800, 200*window.innerHeight/600, 0x000000, 0.8); // 半透明黑色背景
             this.gameover2 = this.scene.add.text(400*window.innerWidth/800, 250*window.innerHeight/600, '游戏结束', { fontSize: '32px', fill: '#fff' }).setOrigin(0.5);
 
-            // this.showBattleLogWithDOM();
+            this.logBtn = this.scene.add.text(100*window.innerWidth/800, 470*window.innerHeight/600, '📜 查看战斗日志', {
+                fontSize: '24px',
+                fill: '#0f0',
+                backgroundColor: '#333',
+                padding: { left: 10, right: 10, top: 5, bottom: 5 }
+            }).setOrigin(0.5).setInteractive();
+
+
+            this.logBtn.on('pointerdown', () => {
+                this.showBattleLogWithDOM();
+            });
+
             this.restart1Button = this.scene.add.text(400*window.innerWidth/800, 370*window.innerHeight/600, '再来一次', {
                 fontSize: '24px',
                 fill: '#0f0',
@@ -456,6 +443,9 @@ export class BattleManager {
                 this.scene.registry.set('returnNode', undefined);
                 this.scene.registry.set("floor", undefined);
                 this.scene.registry.set('gold', undefined);
+                this.scene.registry.set('playerData', undefined);
+                this.scene.registry.set('monsterData', undefined);
+                this.scene.registry.set('profession', undefined);
                 this.scene.scene.start('MenuScene'); 
             });
 
@@ -472,18 +462,20 @@ export class BattleManager {
         
     }
 
-    showBattleLogWithDOM() {
+    logBattle() {
 
 
         const { player1, player2, battleStats, battleLog } = this;
 
-        battleStats[player1.name].healingDone =  player1.hp + battleStats[player1.name].damageTaken - this.player1hp;
-        battleStats[player2.name].healingDone =  player2.hp + battleStats[player2.name].damageTaken - this.player2hp;
 
         const statText = (player) => {
-            const stats = battleStats[player.name];
+            const stats = BattleStats.getStats(player);
             const skills = Object.entries(stats.skillUsage)
-                .map(([k, v]) => `\n🔸 ${k}：${v} 次`).join('');
+            .map(([k, v]) => {
+                const effectDetails = Object.entries(v.effects || {})
+                    .map(([eff, val]) => `${eff}: ${val}`).join(', ');
+                return `\n🔸 ${k}：${v.count} 次（${effectDetails || '无效果'}）`;
+            }).join('');
             return `
     👤 ${player.name}
     ✅ 输出：${stats.damageDealt}
@@ -505,6 +497,50 @@ export class BattleManager {
     📜 战斗日志
     ${logText}
         `;
+
+        BattleLog.clear(); // 开始前清空旧日志
+
+        BattleLog.write(fullText);
+    }
+
+    showBattleLogWithDOM() {
+
+
+        const { player1, player2, battleStats, battleLog } = this;
+
+        const statText = (player) => {
+            const stats = BattleStats.getStats(player);
+            const skills = Object.entries(stats.skillUsage)
+            .map(([k, v]) => {
+                const effectDetails = Object.entries(v.effects || {})
+                    .map(([eff, val]) => `${eff}: ${val}`).join(', ');
+                return `\n🔸 ${k}：${v.count} 次（${effectDetails || '无效果'}）`;
+            }).join('');
+            return `
+    👤 ${player.name}
+    ✅ 输出：${stats.damageDealt}
+    🛡 承伤：${stats.damageTaken}
+    💖 治疗：${stats.healingDone}
+    🛡 护盾吸收：${stats.shieldAbsorbed}
+    🧱 护甲减伤：${stats.armorBlocked}
+    ⚔️ 普攻次数：${stats.normalAttack}
+    ✨ 技能使用：${skills || '无'}
+        `;
+        };
+
+        const logText = BattleLog.getLogs();
+        const fullText = `
+    📊 战斗统计
+    ${statText(player1)}
+    ${statText(player2)}
+
+    📜 战斗日志
+    ${logText}
+        `;
+
+        BattleLog.clear(); // 开始前清空旧日志
+
+        BattleLog.write(fullText);
 
         console.log("📜 battleLog 内容:", battleLog);
 
@@ -551,6 +587,6 @@ export class BattleManager {
             closeBtn.destroy();
 
         });
-    }
+}
 
 }

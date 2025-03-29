@@ -1,4 +1,5 @@
 import { BattleLog } from '../battle/BattleLog.js';
+import { BattleStats } from '../battle/BattleLog.js';
 
 // 技能系统：附加技能类实现
 export class Buff {
@@ -84,6 +85,11 @@ export class HealSkill extends Skill {
             caster.hp = Math.min(caster.hp + this.healAmount, caster.maxHp);
             console.log(`✨ ${caster.name} 消耗 ${this.manaCost}点蓝，回复 ${this.healAmount} 点血!`);
             BattleLog.write(`✨ ${caster.name} 消耗 ${this.manaCost}点蓝，回复 ${this.healAmount} 点血!`);
+            BattleStats.addSkillUsage(caster, this.name, {  
+                "回复血量": this.healAmount,
+                "耗蓝": this.manaCost
+            });
+            BattleStats.addHealingDone(caster,this.healAmount);
         } else {
             if(caster.mp < this.manaCost && caster.hp < caster.maxHp) {
                 // console.log(`❌ ${caster.name} 蓝量不足，无法使用【${this.name}】!`);
@@ -110,6 +116,10 @@ export class BattleHealSkill extends Skill {
         caster.hp = Math.min(caster.maxHp, caster.hp + heal);
         console.log(`\u2764\ufe0f ${this.name}回复 ${heal} HP`);
         BattleLog.write(`   \u2764\ufe0f ${this.name}回复 ${heal} HP`);
+        BattleStats.addSkillUsage(caster, this.name, {
+            "回复血量": heal,
+        });
+        BattleStats.addHealingDone(caster,heal);
     }
 }
 
@@ -124,6 +134,9 @@ export class ManaRegenSkill extends Skill {
         caster.mp = Math.min(caster.maxMp, caster.mp + regen);
         console.log(`\ud83d\udd04 ${this.name}回复 ${regen} MP`);
         BattleLog.write(`   \ud83d\udd04 ${this.name}回复 ${regen} MP`);
+        BattleStats.addSkillUsage(caster, this.name, {
+            "回复蓝量": regen
+        });
     }
 }
 
@@ -138,6 +151,10 @@ export class BattlefieldHealSkill extends Skill {
         caster.hp = Math.min(caster.maxHp, caster.hp + heal);
         console.log(`\u2764\ufe0f ${this.name}回复 ${heal} HP`);
         BattleLog.write(`   \u2764\ufe0f ${this.name}回复 ${heal} HP`);
+        BattleStats.addSkillUsage(caster, this.name, {
+            "回复血量": heal
+        });
+        BattleStats.addHealingDone(caster,heal);
     }
 }
 
@@ -152,6 +169,9 @@ export class ManaTideSkill extends Skill {
         caster.mp = Math.min(caster.maxMp, caster.mp + regen);
         console.log(`\ud83d\udd04 法力潮汐恢复 ${regen} MP`);
         BattleLog.write(`   \ud83d\udd04 法力潮汐恢复 ${regen} MP`);
+        BattleStats.addSkillUsage(caster, this.name, {
+            "回复蓝量": regen
+        });
     }
 }
 
@@ -165,7 +185,18 @@ export class BerserkerRageSkill extends Skill {
         this.boost = Math.max((2 - Math.max(caster.hp,0) / Math.max(caster.maxHp+caster.tempMaxHp,0)),1) - 1;
         caster.damageBoost += this.boost*this.level;
         console.log(`\ud83d\udd04 血性狂乱伤害增幅 ${this.boost*this.level*100} %`);
+        const stats = BattleStats.getStats(caster);
+        if(stats.skillUsage["血性狂乱"]) {
+            BattleStats.addSkillUsage(caster, this.name, {
+                "平均伤害增幅": stats.skillUsage["血性狂乱"].effects["平均伤害增幅"]? (stats.skillUsage["血性狂乱"].effects["平均伤害增幅"]*stats.skillUsage["血性狂乱"].count + this.boost)/(stats.skillUsage["血性狂乱"].count+1)-stats.skillUsage["血性狂乱"].effects["平均伤害增幅"] : this.boost
+            });
+        }else {
+            BattleStats.addSkillUsage(caster, this.name, {
+                "平均伤害增幅": this.boost
+            });
+        }
         BattleLog.write(`   \ud83d\udd04 血性狂乱伤害增幅 ${this.boost*this.level*100} %`);
+
     }
 
 }
@@ -179,9 +210,12 @@ export class MomentumSkill extends Skill {
 
     activate(caster) {
         this.bonusAttack += this.level*3;
-        caster.tempAttack += this.level*3*caster.attackCount;
-        console.log(`\u2694\ufe0f 越战越勇：攻击力+${this.level*3}, 当前+${this.level*3*caster.attackCount}`);
-        BattleLog.write(`   \u2694\ufe0f 越战越勇：攻击力+${this.level*3}, 当前+${this.level*3*caster.attackCount}`);
+        caster.tempAttack += this.level*3*(caster.attackCount+1);
+        console.log(`\u2694\ufe0f 越战越勇：攻击力+${this.level*3}, 当前+${this.level*3*(caster.attackCount+1)}`);
+        BattleLog.write(`   \u2694\ufe0f 越战越勇：攻击力+${this.level*3}, 当前+${this.level*3*(caster.attackCount+1)}`);
+        BattleStats.addSkillUsage(caster, this.name, {
+            "攻击力加成": this.level*3
+        });
     }
 
     reset() {
@@ -239,6 +273,10 @@ export class ArcaneBarrierSkill extends Skill {
             caster.shield += this.manaCost * (10 + (this.level - 1) * 1);
             console.log(`🛡️ ${caster.name} 激活奥术壁垒，消耗 ${this.manaCost} 法力，获得 ${this.manaCost * 10} 护盾`);
             BattleLog.write(`   🛡️ ${caster.name} 激活奥术壁垒，消耗 ${this.manaCost} 法力，获得 ${this.manaCost * 10} 护盾`);
+            BattleStats.addSkillUsage(caster, this.name, {
+            "获得护盾": this.manaCost * (10 + (this.level - 1) * 1),
+            "耗蓝": this.manaCost
+        });
         }
     }
 }
@@ -257,6 +295,12 @@ export class MagicMissileSkill extends Skill {
             target.hp -= damage;
             console.log(`🎯 魔法飞弹命中，消耗 ${this.manaCost}法力，造成 ${damage} 伤害`);
             BattleLog.write(`   🎯 魔法飞弹命中，消耗 ${this.manaCost}法力，造成 ${damage} 伤害`);
+            BattleStats.addSkillUsage(caster, this.name, {
+                "造成伤害": damage,
+                "耗蓝": this.manaCost
+            });
+            BattleStats.addDamageDealt(caster,damage);
+            BattleStats.addDamageTaken(target,damage);
         }
     }
 }
@@ -287,6 +331,10 @@ export class ManaBurnSkill extends Skill {
             caster.tempAttack += addattack;
             console.log(`🔥 ${caster.name} 激活法力燃烧，消耗 ${this.manaCost} 法力，攻击力翻倍至 ${caster.attack+caster.tempAttack}`);
             BattleLog.write(`   🔥 ${caster.name} 激活法力燃烧，消耗 ${this.manaCost} 法力，攻击力翻倍至 ${caster.attack+caster.tempAttack}`);
+            BattleStats.addSkillUsage(caster, this.name, {
+            "攻击力增益": addattack,
+            "耗蓝": this.manaCost
+        });
         }
     }
 }
@@ -316,6 +364,10 @@ export class ArcaneReversalSkill extends Skill {
             const reduced = Math.floor(damage * 0.5);
             console.log(`🛡️ 奥术反制触发，消耗 ${this.manaCost} 法力，伤害从 ${damage} 降至 ${reduced}`);
             BattleLog.write(`   🛡️ 奥术反制触发，消耗 ${this.manaCost} 法力，伤害从 ${damage} 降至 ${reduced}`);
+            BattleStats.addSkillUsage(caster, this.name, {
+            "伤害减免": damage - reduced,
+            "耗蓝": this.manaCost
+        });
             return reduced;
         }
         return damage;
@@ -337,6 +389,10 @@ export class IceArmorSkill extends Skill {
             caster.shield += shield;
             console.log(`🧊 冰甲术触发！免死并获得 ${shield} 护盾`);
             BattleLog.write(`   🧊 冰甲术触发！免死并获得 ${shield} 护盾`);
+            BattleStats.addSkillUsage(caster, this.name, {
+            "获得护盾": shield,
+            "耗蓝": this.manaCost
+        });
         }
     }
 

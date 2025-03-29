@@ -368,6 +368,13 @@ export class LevelSelectScene extends Phaser.Scene {
             this.scrollThumb.y = Phaser.Math.Clamp(pointer.y, trackTop, trackBottom);
         });
 
+        // 滑块按下变色，抬起恢复
+        this.scrollThumb.on('pointerup', (pointer) => {
+            this.scrollThumbup = true;
+            this.scrollThumb.setFillStyle(0xffffff);
+            this.lastPointerY = null;
+        });
+
         window.addEventListener('mouseup', () => {
             if (this.scrollThumb && !this.scrollThumbup) {
                 this.scrollThumbup = true;

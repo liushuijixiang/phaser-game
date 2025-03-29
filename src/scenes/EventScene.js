@@ -1,4 +1,5 @@
 import { SkillRegistry } from '../skills/SkillRegistry.js';
+import { BattleLog } from '../battle/BattleLog.js';
 
 export class EventScene extends Phaser.Scene {
     constructor() {
@@ -16,10 +17,13 @@ export class EventScene extends Phaser.Scene {
 
         let options = [];
 
+        this.optionstext = [];
+
+
         const goldRewards = {
-            victory_normal: 10,
-            victory_elite: 35,
-            victory_boss: 100,
+            victory_normal: 20,
+            victory_elite: 50,
+            victory_boss: 200,
             event: 0 // 事件通常不给金币，但你也可以改
         };
 
@@ -32,8 +36,8 @@ export class EventScene extends Phaser.Scene {
 
         const rewardPools = {
             victory_normal: [
-                () => ({ text: "❤️ 最大生命 +10", effect: () => this.modifyPlayer('maxHp', 10) }),
-                () => ({ text: "⚔️ 攻击 +3", effect: () => this.modifyPlayer('attack', 3) }),
+                () => ({ text: "❤️ 最大生命 +20", effect: () => {this.modifyPlayer('maxHp', 20);this.modifyPlayer('hp', 20)}}),
+                () => ({ text: "⚔️ 攻击 +5", effect: () => this.modifyPlayer('attack', 5) }),
                 () => {
                     const [skill] = this.getRandomSkill(1, { rarity: 'common' });
                     return {
@@ -44,8 +48,9 @@ export class EventScene extends Phaser.Scene {
                         }
                     };
                 },
-                () => ({ text: "💰 金币 +10", effect: () => this.addGold(10) }),
-                () => ({ text: "💙 魔力 +5", effect: () => this.modifyPlayer('maxMp', 5) }),
+                () => ({ text: "💰 金币 +40", effect: () => this.addGold(40) }),
+                () => ({ text: "💙 魔力 +10", effect: () => {this.modifyPlayer('maxMp', 10);this.modifyPlayer('mp', 10)}}),
+                () => ({ text: "🧱 护甲 +5", effect: () => this.modifyPlayer('armor', 5) }),
             ],
 
             victory_elite: [
@@ -59,10 +64,10 @@ export class EventScene extends Phaser.Scene {
                         }
                     };
                 },
-                () => ({ text: "🧱 护甲 +4", effect: () => this.modifyPlayer('armor', 4) }),
+                () => ({ text: "🧱 护甲 +15", effect: () => this.modifyPlayer('armor', 15) }),
                 () => ({ text: "💰 金币 +100", effect: () => this.addGold(100) }),
                 () => ({ text: "💍 获得稀有饰品（占位）", effect: () => this.log("获得饰品：龙鳞指环") }),
-                () => ({ text: "🔥 攻击 +5", effect: () => this.modifyPlayer('attack', 5) }),
+                () => ({ text: "⚔️ 攻击 +5", effect: () => this.modifyPlayer('attack', 5) }),
             ],
 
             victory_boss: [
@@ -87,7 +92,7 @@ export class EventScene extends Phaser.Scene {
             const pool = rewardPools[from];
             const shuffled = Phaser.Utils.Array.Shuffle(pool); // 随机顺序
             options = shuffled.slice(0, 3).map(fn => fn.call(this));
-            this.optionstext = [];
+            // this.optionstext = [];
             this.setGold(this.gold + (goldRewards[from] || 0));
             this.text = this.add.text(400*window.innerWidth/800, 80*window.innerHeight/600, (rewardtext[from]||""), { fontSize: '26px', fill: '#fff' }).setOrigin(0.5);
             // 渲染选项
@@ -107,10 +112,22 @@ export class EventScene extends Phaser.Scene {
                         }
                     });
             });
+
+            this.logBtn = this.add.text(100*window.innerWidth/800, 470*window.innerHeight/600, '📜 查看战斗日志', {
+                fontSize: '24px',
+                fill: '#0f0',
+                backgroundColor: '#333',
+                padding: { left: 10, right: 10, top: 5, bottom: 5 }
+            }).setOrigin(0.5).setInteractive();
+
+            this.logBtn.on('pointerdown', () => {
+                this.showBattleLogWithDOM();
+            });
+
         }
         this.drawGoldDisplay();
         
-        this.optionstext = [];
+        // this.optionstext = [];
 
         
     }
@@ -446,6 +463,12 @@ export class EventScene extends Phaser.Scene {
         if (this.backButton) {
             this.backButton.setPosition(width / 2, 450 * height / 600);
         }
+
+        if (this.logBtn) {
+            this.logBtn.setPosition(100*window.innerWidth/800, 470*window.innerHeight/600);
+            // this.logBtn.setScale(window.innerWidth/800, window.innerHeight/600);
+        }
+
     }
 
     getRandomSkill(count = 1) {
@@ -499,6 +522,57 @@ export class EventScene extends Phaser.Scene {
 
     //     return result.map(SkillClass => new SkillClass());
     // }
+
+    showBattleLogWithDOM() {
+        const fullText = BattleLog.getLogs();
+
+        // console.log("📜 battleLog 内容:", battleLog);
+
+        // console.log(fullText);
+
+        const textarea = document.createElement('textarea');
+        textarea.value = fullText;
+        textarea.readOnly = true;
+
+        Object.assign(textarea.style, {
+            position: 'absolute',
+            left: `${window.innerWidth * 0.1}px`,
+            top: `${window.innerHeight * 0.1}px`,
+            width: `${window.innerWidth * 0.8}px`,
+            height: `${window.innerHeight * 0.6}px`,
+            backgroundColor: '#111',
+            color: 'white',
+            fontFamily: 'monospace',
+            fontSize: '14px',
+            padding: '10px',
+            overflow: 'auto',
+            border: '2px solid white',
+            resize: 'none',
+            zIndex: 9999
+        });
+
+        document.body.appendChild(textarea);
+
+        // 关闭按钮
+        const closeBtn = this.add.text(
+            this.scale.width / 2,
+            this.scale.height * 0.8,
+            '关闭日志',
+            {
+                fontSize: '20px',
+                fill: '#0f0',
+                backgroundColor: '#000',
+                padding: { x: 10, y: 5 }
+            }
+        ).setOrigin(0.5).setInteractive();
+
+        closeBtn.on('pointerdown', () => {
+            document.body.removeChild(textarea); // ✅ 销毁
+            closeBtn.destroy();
+
+        });
+    }
+    
 
 
 }

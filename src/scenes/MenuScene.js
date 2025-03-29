@@ -30,11 +30,13 @@ export class MenuScene extends Phaser.Scene {
         this.resizeGame(); // 初始化时调用一次
 
         //测试用
-        this.registry.set('gold', 500);
+        // this.registry.set('gold', 500);
 
 
         // ✅ 初始化数据
-        if (!this.registry.get('playerData')) {
+        const playerData = this.registry.get('playerData');
+        console.log(`playerData is ${playerData}`);
+        if (playerData === undefined) {
             let hp = Phaser.Math.Between(1,100)+Phaser.Math.Between(50,100);
             let mp = Phaser.Math.Between(1,100)+Phaser.Math.Between(50,100);
             let attack = Phaser.Math.Between(3,8)+Phaser.Math.Between(5,10);
@@ -150,8 +152,18 @@ export class MenuScene extends Phaser.Scene {
                 this.showToast(`🎉 ${currentProfession} 进阶成功！获得新技能！`);
 
                 // 示例：添加一个技能
-                player.skills.push(new EliteSkill());
+                // player.skills.push(new EliteSkill());
             }
+
+            // 显示开始按钮
+            this.startButton = this.add.text(window.innerWidth / 2, window.innerHeight / 2 + 100, '🎮 进入下一层', {
+                fontSize: '26px',
+                fill: '#0f0'
+            }).setOrigin(0.5).setInteractive();
+
+            this.startButton.on('pointerdown', () => {
+                this.scene.start('LevelSelectScene');
+            });
         }
 
 

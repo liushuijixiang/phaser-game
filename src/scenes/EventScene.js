@@ -9,13 +9,14 @@ export class EventScene extends Phaser.Scene {
     create(data) {
         // 来源类型：来自战斗胜利 or 事件节点
         const from = data.from || 'event';
+        this.from = data.from || 'event';
 
         this.gold = this.registry.get('gold') || 0;
         
 
         window.addEventListener('resize', () => this.resizeGame(), false);
 
-        let options = [];
+        this.options = [];
 
         this.optionstext = [];
 
@@ -36,8 +37,8 @@ export class EventScene extends Phaser.Scene {
 
         const rewardPools = {
             victory_normal: [
-                () => ({ text: "❤️ 最大生命 +20", effect: () => {this.modifyPlayer('maxHp', 20);this.modifyPlayer('hp', 20)}}),
-                () => ({ text: "⚔️ 攻击 +5", effect: () => this.modifyPlayer('attack', 5) }),
+                () => ({ text: "❤️ 最大生命 +50", effect: () => {this.modifyPlayer('maxHp', 50);this.modifyPlayer('hp', 50)}}),
+                () => ({ text: "⚔️ 攻击 +10", effect: () => this.modifyPlayer('attack', 10) }),
                 () => {
                     const [skill] = this.getRandomSkill(1, { rarity: 'common' });
                     return {
@@ -49,7 +50,7 @@ export class EventScene extends Phaser.Scene {
                     };
                 },
                 () => ({ text: "💰 金币 +40", effect: () => this.addGold(40) }),
-                () => ({ text: "💙 魔力 +10", effect: () => {this.modifyPlayer('maxMp', 10);this.modifyPlayer('mp', 10)}}),
+                () => ({ text: "💙 魔力 +20", effect: () => {this.modifyPlayer('maxMp', 20);this.modifyPlayer('mp', 20)}}),
                 () => ({ text: "🧱 护甲 +5", effect: () => this.modifyPlayer('armor', 5) }),
             ],
 
@@ -57,17 +58,29 @@ export class EventScene extends Phaser.Scene {
                 () => {
                     const [skill] = this.getRandomSkill(1, { rarity: 'rare' });
                     return {
-                        text: `💥 学会稀有技能：${skill.name}`,
+                        text: `💥 学会技能：${skill.name}`,
                         effect: () => {
                             this.addSkill(skill);
-                            this.log(`获得稀有技能：${skill.name}`);
+                            this.log(`获得技能：${skill.name}`);
                         }
                     };
                 },
+                () => {
+                    const [skill] = this.getRandomSkill(1, { rarity: 'rare' });
+                    return {
+                        text: `💥 学会技能：${skill.name}`,
+                        effect: () => {
+                            this.addSkill(skill);
+                            this.log(`获得技能：${skill.name}`);
+                        }
+                    };
+                },
+                () => ({ text: "❤️ 最大生命 +150", effect: () => {this.modifyPlayer('maxHp', 150);this.modifyPlayer('hp', 150)}}),
                 () => ({ text: "🧱 护甲 +15", effect: () => this.modifyPlayer('armor', 15) }),
                 () => ({ text: "💰 金币 +100", effect: () => this.addGold(100) }),
-                () => ({ text: "💍 获得稀有饰品（占位）", effect: () => this.log("获得饰品：龙鳞指环") }),
-                () => ({ text: "⚔️ 攻击 +5", effect: () => this.modifyPlayer('attack', 5) }),
+                // () => ({ text: "💍 获得稀有饰品（占位）", effect: () => this.log("获得饰品：龙鳞指环") }),
+                () => ({ text: "⚔️ 攻击 +30", effect: () => this.modifyPlayer('attack', 5) }),
+                () => ({ text: "💙 魔力 +60", effect: () => {this.modifyPlayer('maxMp', 60);this.modifyPlayer('mp', 60)}}),
             ],
 
             victory_boss: [
@@ -80,7 +93,17 @@ export class EventScene extends Phaser.Scene {
             event: [
                 () => ({ text: "❤️ 回复 30% 生命", effect: () => this.healPercent(0.3) }),
                 () => ({ text: "⚔️ 遭遇伏击战！", effect: () => this.scene.start('GameScene', { enemyType: "ambush" }) }),
-                () => ({ text: "💎 获得稀有饰品（占位）", effect: () => this.log("获得：冰魄项链") }),
+                // () => ({ text: "💎 获得稀有饰品（占位）", effect: () => this.log("获得：冰魄项链") }),
+                () => {
+                    const [skill] = this.getRandomSkill(1, { rarity: 'common' });
+                    return {
+                        text: `⭐ 学会技能：${skill.name}`,
+                        effect: () => {
+                            this.addSkill(skill);
+                            this.log(`获得技能：${skill.name}`);
+                        }
+                    };
+                },
             ],
         };
 
@@ -91,12 +114,12 @@ export class EventScene extends Phaser.Scene {
         } else {
             const pool = rewardPools[from];
             const shuffled = Phaser.Utils.Array.Shuffle(pool); // 随机顺序
-            options = shuffled.slice(0, 3).map(fn => fn.call(this));
+            this.options = shuffled.slice(0, 3).map(fn => fn.call(this));
             // this.optionstext = [];
             this.setGold(this.gold + (goldRewards[from] || 0));
             this.text = this.add.text(400*window.innerWidth/800, 80*window.innerHeight/600, (rewardtext[from]||""), { fontSize: '26px', fill: '#fff' }).setOrigin(0.5);
             // 渲染选项
-            options.forEach((opt, idx) => {
+            this.options.forEach((opt, idx) => {
                 this.optionstext[idx] = this.add.text(400*window.innerWidth/800, 160*window.innerHeight/600 + idx * 60*window.innerHeight/600, opt.text, { fontSize: '20px', fill: '#0f0' })
                     .setOrigin(0.5)
                     .setInteractive()
@@ -113,7 +136,7 @@ export class EventScene extends Phaser.Scene {
                     });
             });
 
-            this.logBtn = this.add.text(100*window.innerWidth/800, 470*window.innerHeight/600, '📜 查看战斗日志', {
+            this.logBtn = this.add.text(150*window.innerWidth/800, 470*window.innerHeight/600, '📜 查看战斗日志', {
                 fontSize: '24px',
                 fill: '#0f0',
                 backgroundColor: '#333',
@@ -121,6 +144,12 @@ export class EventScene extends Phaser.Scene {
             }).setOrigin(0.5).setInteractive();
 
             this.logBtn.on('pointerdown', () => {
+                this.logBtn.destroy();
+                if (this.optionstext && Array.isArray(this.optionstext)) {
+                    this.optionstext.forEach((t, i) => {
+                        t.destroy();
+                    });
+                }
                 this.showBattleLogWithDOM();
             });
 
@@ -278,7 +307,7 @@ export class EventScene extends Phaser.Scene {
                 name: `⭐ 技能：${skill.name}`,
                 type: 'skill',
                 price: 40,
-                weight: 6,
+                weight: 25,
                 effect: (scene) => {
                     
                     this.addSkill(skill);
@@ -567,6 +596,40 @@ export class EventScene extends Phaser.Scene {
         ).setOrigin(0.5).setInteractive();
 
         closeBtn.on('pointerdown', () => {
+
+            this.logBtn = this.add.text(150*window.innerWidth/800, 470*window.innerHeight/600, '📜 查看战斗日志', {
+                fontSize: '24px',
+                fill: '#0f0',
+                backgroundColor: '#333',
+                padding: { left: 10, right: 10, top: 5, bottom: 5 }
+            }).setOrigin(0.5).setInteractive();
+            this.logBtn.on('pointerdown', () => {
+                this.logBtn.destroy();
+                if (this.optionstext && Array.isArray(this.optionstext)) {
+                    this.optionstext.forEach((t, i) => {
+                        t.destroy();
+                    });
+                }
+                this.showBattleLogWithDOM();
+            });
+
+            this.options.forEach((opt, idx) => { 
+                this.optionstext[idx] = this.add.text(400*window.innerWidth/800, 160*window.innerHeight/600 + idx * 60*window.innerHeight/600, opt.text, { fontSize: '20px', fill: '#0f0' })
+                    .setOrigin(0.5)
+                    .setInteractive()
+                    .on('pointerdown', () => {
+                        opt.effect();
+
+                        // 若是正常事件奖励，返回 LevelSelectScene
+                        if (opt.text.indexOf("遭遇") === -1) {
+                            this.time.delayedCall(500, () => {
+                                if (this.from === 'victory_boss'){this.scene.start('MenuScene');}
+                                else{this.scene.start('LevelSelectScene');}
+                            });
+                        }
+                    });
+            });
+
             document.body.removeChild(textarea); // ✅ 销毁
             closeBtn.destroy();
 

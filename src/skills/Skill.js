@@ -84,7 +84,7 @@ export class HealSkill extends Skill {
             caster.mp -= this.manaCost;
             caster.hp = Math.min(caster.hp + this.healAmount, caster.maxHp);
             console.log(`✨ ${caster.name} 消耗 ${this.manaCost}点蓝，回复 ${this.healAmount} 点血!`);
-            BattleLog.write(`✨ ${caster.name} 消耗 ${this.manaCost}点蓝，回复 ${this.healAmount} 点血!`);
+            BattleLog.write(`   ✨ ${caster.name} 使用治疗术，消耗 ${this.manaCost}点蓝，回复 ${this.healAmount} 点血!`);
             BattleStats.addSkillUsage(caster, this.name, {  
                 "回复血量": this.healAmount,
                 "耗蓝": this.manaCost
@@ -241,6 +241,8 @@ export class FirstStrikeSkill extends Skill {
     }
 }
 
+//过度生长，血之滋味，杀人书
+
 // 斩杀：低血敌人直接击杀
 export class ExecuteSkill extends Skill {
     constructor() {
@@ -331,8 +333,8 @@ export class ArcaneWisdomSkill extends Skill {
     activate(caster) {
         const restore = 5 + (this.level - 1) * 2;
         caster.mp = Math.min(caster.maxMp, caster.mp + restore);
-        console.log(`🔄 ${caster.name} 恢复 ${restore} 点法力值`);
-        BattleLog.write(`   🔄 ${caster.name} 恢复 ${restore} 点法力值`);
+        console.log(`🔄 激活奥术智慧， ${caster.name} 恢复 ${restore} 点法力值`);
+        BattleLog.write(`   🔄 激活奥术智慧， ${caster.name} 恢复 ${restore} 点法力值`);
         BattleStats.addSkillUsage(caster, this.name, {
                 "法力值恢复": restore,
         });
@@ -371,7 +373,7 @@ export class ArcaneEchoSkill extends Skill {
         const gain = 1 + this.level;
         caster.tempAttack = (caster.tempAttack || 0) + gain;
         console.log(`🔊 灵能回响：攻击力增加 ${gain}`);
-        BattleLog.write(`   🌊 灵能回响触发：攻击力 +${gain}`);
+        BattleLog.write(`   🔊 灵能回响触发：攻击力 +${gain}`);
         BattleStats.addSkillUsage(caster, this.name, {
                 "攻击力增加": gain,
         });
@@ -427,15 +429,16 @@ export class IceArmorSkill extends Skill {
         if (!this.used && caster.mp > 0) {
             this.used = true;
             const shield = caster.mp * (5 + (this.level - 1));
-            caster.mp = 0;
-            caster.hp = 1;
-            caster.shield += shield;
+            
             console.log(`🧊 冰甲术触发！免死并获得 ${shield} 护盾`);
             BattleLog.write(`   🧊 冰甲术触发！免死并获得 ${shield} 护盾`);
             BattleStats.addSkillUsage(caster, this.name, {
-            "获得护盾": shield,
-            "耗蓝": this.manaCost
-        });
+                "获得护盾": shield,
+                "耗蓝": caster.mp
+            });
+            caster.mp = 0;
+            caster.hp = 1;
+            caster.shield += shield;
         }
     }
 

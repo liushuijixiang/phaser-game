@@ -251,7 +251,7 @@ export class BattleManager {
         BattleStats.addDamageTaken(defender, damage);
         BattleStats.addNormalAttack(attacker);
 
-        BattleLog.write(`⚔  ${attacker.name} 普通攻击造成 ${damage} 点伤害`);
+        BattleLog.write(`   ⚔  ${attacker.name} 普通攻击造成 ${damage} 点伤害`);
 
         // 处理命中后特效
         this.triggerHitEffects(attacker, defender, damage);
@@ -291,7 +291,7 @@ export class BattleManager {
         let crit = Phaser.Math.Between(1,100) < attacker.critChance + attacker.tempCritChance;
         let critMultiplier = crit ? attacker.critDamage / 100 : 1;
         let damage = baseAttack * critMultiplier * multiplier;
-        console.log(`crit is ${crit} and attacker.critChance is ${attacker.critChance} and attacker.tempCritChance is ${attacker.tempCritChance}`);
+        // console.log(`crit is ${crit} and attacker.critChance is ${attacker.critChance} and attacker.tempCritChance is ${attacker.tempCritChance}`);
         console.log(`   💥 伤害计算: ${baseAttack} -> ${Math.floor(damage)} (${crit ? "暴击!" : "普通攻击"})`);
         BattleLog.write(`   💥 伤害计算: ${baseAttack} -> ${Math.floor(damage)} (${crit ? "暴击!" : "普通攻击"})`);
         return Math.floor(damage);
@@ -448,6 +448,7 @@ export class BattleManager {
 
 
             this.logBtn.on('pointerdown', () => {
+                this.logBtn.destroy();
                 this.showBattleLogWithDOM();
             });
 
@@ -614,6 +615,18 @@ export class BattleManager {
         ).setOrigin(0.5).setInteractive();
 
         closeBtn.on('pointerdown', () => {
+            this.logBtn = this.scene.add.text(100*window.innerWidth/800, 470*window.innerHeight/600, '📜 查看战斗日志', {
+                fontSize: '24px',
+                fill: '#0f0',
+                backgroundColor: '#333',
+                padding: { left: 10, right: 10, top: 5, bottom: 5 }
+            }).setOrigin(0.5).setInteractive();
+
+
+            this.logBtn.on('pointerdown', () => {
+                this.logBtn.destroy();
+                this.showBattleLogWithDOM();
+            });
             document.body.removeChild(textarea); // ✅ 销毁
             closeBtn.destroy();
 

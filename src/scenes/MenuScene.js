@@ -69,19 +69,19 @@ export class MenuScene extends Phaser.Scene {
         const professions = [
             {
                 name: "战士",
-                bonus: { maxHp: 50, hp: 50, attack: 5, armor: 5 },
+                bonus: { maxHp: 50, hp: 50, attack: 5, armor: 50 },
                 // skills: [new WarriorSkill()],
                 requiredForUpgrade: { maxHp: 200, attack: 30 }
             },
             {
                 name: "法师",
-                bonus: { maxMp: 60,mp: 60, attack: 3 },
+                bonus: { maxMp: 160, mp: 160, attack: 5 },
                 // skills: [new MageSkill()],
                 requiredForUpgrade: { maxMp: 200 }
             },
             {
                 name: "刺客",
-                bonus: { speed: 50, attack: 10 },
+                bonus: { speed: 50, attack: 50 },
                 // skills: [new AssassinSkill()],
                 requiredForUpgrade: { speed: 150, attack: 40 }
             }

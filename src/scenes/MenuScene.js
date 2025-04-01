@@ -142,7 +142,7 @@ export class MenuScene extends Phaser.Scene {
         }
 
 
-        if (profDef && this.fromBossVictory) {
+        if (profDef) {
             const req = profDef.requiredForUpgrade;
             const meetsRequirement = Object.keys(req).every(key => player[key] >= req[key]);
 

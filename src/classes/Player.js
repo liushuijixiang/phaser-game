@@ -27,14 +27,16 @@ export class Player {
         this.skills = playerData.skills ? playerData.skills : [];
 
         this.critChance = 0;
-        this.critDamage = 0;
+        this.critDamage = 150;
 
         //临时属性,战斗结束清除
         this.tempMaxHp = 0;
         this.tempMaxMp = 0;
+        this.tempArmor = 0;
         this.attackCount = 0;
 
         //临时属性,回合结束清除
+        this.tempCritChance = 0;
         this.tempAttack = 0;
         this.tempArmor = 0;
         this.tempShield = 0;
@@ -296,6 +298,7 @@ export class Player {
 
     // 回合状态清除
     reset() {
+        this.tempCritChance = 0;
         this.tempAttack = 0;
         this.tempArmor = 0;
         this.tempShield = 0;

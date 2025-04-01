@@ -223,40 +223,43 @@ export class MomentumSkill extends Skill {
     }
 }
 
-// // 抢攻：首次攻击必定暴击
-// export class FirstStrikeSkill extends Skill {
-//     constructor() {
-//         super("抢攻", "onFirstAttack", "第一次攻击必定暴击");
-//         this.used = false;
-//     }
+// 抢攻：首次攻击必定暴击
+export class FirstStrikeSkill extends Skill {
+    constructor() {
+        super("抢攻", "onTurnStart", "第一次攻击必定暴击");
+    }
 
-//     activate(caster, target, damage) {
-//         if (!this.used) {
-//             this.used = true;
-//             console.log(`\u2728 抢攻：造成暴击！`);
-//             return damage * 2;
-//         }
-//         return damage;
-//     }
+    activate(caster) {
+        if(caster.attackCount < this.level) {
+            console.log(`\u2728 抢攻发动，${caster.name}下一次攻击必定造成暴击！`);
+            BattleLog.write(`   \u2728 抢攻发动，${caster.name}下一次攻击必定造成暴击！`);
+            caster.tempCritChance = 100;
+            BattleStats.addSkillUsage(caster, this.name, {
+                "暴击增益次数": 1
+            });
+        }
+    }
+}
 
-//     reset() {
-//         this.used = false;
-//     }
-// }
+// 斩杀：低血敌人直接击杀
+export class ExecuteSkill extends Skill {
+    constructor() {
+        super("斩杀", "onAttack", "敌人血量较低时有概率直接击杀");
+    }
 
-// // 斩杀：低血敌人直接击杀
-// export class ExecuteSkill extends Skill {
-//     constructor() {
-//         super("斩杀", "onAttack", "敌人低于10%血量时直接击杀");
-//     }
-
-//     activate(caster, target) {
-//         if (target.hp / target.maxHp <= 0.1) {
-//             console.log(`\u2620\ufe0f 斩杀触发！`);
-//             target.hp = 0;
-//         }
-//     }
-// }
+    activate(caster, target) {
+        if (target.hp / target.maxHp <= 0.01*Phaser.Math.Between(1,10+this.level)) {
+            console.log(`\u2620\ufe0f ${caster.name} 触发斩杀！`);
+            BattleLog.write(`   \u2620\ufe0f ${caster.name} 触发斩杀！`);
+            BattleStats.addSkillUsage(caster, this.name, {
+                "触发斩杀，造成伤害": target.hp,
+            });
+            BattleStats.addDamageDealt(caster,target.hp);
+            BattleStats.addDamageTaken(target,target.hp);
+            target.hp = 0;
+        }
+    }
+}
 
 
 
@@ -274,10 +277,25 @@ export class ArcaneBarrierSkill extends Skill {
             console.log(`🛡️ ${caster.name} 激活奥术壁垒，消耗 ${this.manaCost} 法力，获得 ${this.manaCost * 10} 护盾`);
             BattleLog.write(`   🛡️ ${caster.name} 激活奥术壁垒，消耗 ${this.manaCost} 法力，获得 ${this.manaCost * 10} 护盾`);
             BattleStats.addSkillUsage(caster, this.name, {
-            "获得护盾": this.manaCost * (10 + (this.level - 1) * 1),
-            "耗蓝": this.manaCost
-        });
+                "获得护盾": this.manaCost * (10 + (this.level - 1) * 1),
+                "耗蓝": this.manaCost
+            });
         }
+    }
+}
+
+export class ArcaneBarrierEchoSkill extends Skill {
+    constructor() {
+        super("次生护盾", "onSpellCast", "消耗最大法力值时，获得等量的临时护盾");
+    }
+
+    activate(caster,manaCost) {
+            caster.shield += manaCost * (1 + (this.level - 1) * 1);
+            console.log(`🛡️ ${caster.name} 激活次生护盾，获得 ${manaCost * (1 + (this.level - 1) * 1)} 护盾`);
+            BattleLog.write(`   🛡️ ${caster.name} 激活次生护盾，获得 ${manaCost * (1 + (this.level - 1) * 1)} 护盾`);
+            BattleStats.addSkillUsage(caster, this.name, {
+                "获得护盾":  manaCost * (1 + (this.level - 1) * 1),
+            });
     }
 }
 
@@ -305,17 +323,22 @@ export class MagicMissileSkill extends Skill {
     }
 }
 
-// export class ArcaneWisdomSkill extends Skill {
-//     constructor() {
-//         super("奥术智慧", "onManaUse", "使用法力值后回复5点法力值");
-//     }
+export class ArcaneWisdomSkill extends Skill {
+    constructor() {
+        super("奥术智慧", "onSpellCast", "使用法力值后回复5点法力值");
+    }
 
-//     activate(caster) {
-//         const restore = 5 + (this.level - 1) * 5;
-//         caster.mp = Math.min(caster.maxMp, caster.mp + restore);
-//         console.log(`🔄 ${caster.name} 恢复 ${restore} 点法力值`);
-//     }
-// }
+    activate(caster) {
+        const restore = 5 + (this.level - 1) * 2;
+        caster.mp = Math.min(caster.maxMp, caster.mp + restore);
+        console.log(`🔄 ${caster.name} 恢复 ${restore} 点法力值`);
+        BattleLog.write(`   🔄 ${caster.name} 恢复 ${restore} 点法力值`);
+        BattleStats.addSkillUsage(caster, this.name, {
+                "法力值恢复": restore,
+        });
+
+    }
+}
 
 export class ManaBurnSkill extends Skill {
     constructor() {
@@ -339,17 +362,21 @@ export class ManaBurnSkill extends Skill {
     }
 }
 
-// export class ArcaneEchoSkill extends Skill {
-//     constructor() {
-//         super("灵能回响", "onSpellCast", "施放法术后攻击力 +2，可叠加");
-//     }
+export class ArcaneEchoSkill extends Skill {
+    constructor() {
+        super("灵能回响", "onSpellCast", "施放法术后攻击力 +2，可叠加");
+    }
 
-//     activate(caster) {
-//         const gain = 2 * this.level;
-//         caster.tempAttack = (caster.tempAttack || 0) + gain;
-//         console.log(`🔊 灵能回响：攻击力增加 ${gain}`);
-//     }
-// }
+    activate(caster) {
+        const gain = 1 + this.level;
+        caster.tempAttack = (caster.tempAttack || 0) + gain;
+        console.log(`🔊 灵能回响：攻击力增加 ${gain}`);
+        BattleLog.write(`   🌊 灵能回响触发：攻击力 +${gain}`);
+        BattleStats.addSkillUsage(caster, this.name, {
+                "攻击力增加": gain,
+        });
+    }
+}
 
 export class ArcaneReversalSkill extends Skill {
     constructor() {
@@ -370,6 +397,22 @@ export class ArcaneReversalSkill extends Skill {
         });
             return reduced;
         }
+        return damage;
+    }
+}
+
+export class BarrierSkill extends Skill {
+    constructor() {
+        super("自适应护甲", "onDamageTaken", "受到伤害时，获得持续到战斗结束的临时护甲");
+    }
+
+    activate(caster, damage) {
+        caster.tempArmor += this.level + Math.floor(damage*0.1*this.level);
+        console.log(`🛡️ 自适应护甲触发，获得${Math.floor(damage*0.1*this.level)}临时护甲`);
+        BattleLog.write(`   🛡️ 自适应护甲触发，获得${Math.floor(damage*0.1*this.level)}临时护甲`);
+        BattleStats.addSkillUsage(caster, this.name, {
+            "获得护甲": Math.floor(damage*0.1*this.level),
+        });
         return damage;
     }
 }
@@ -419,33 +462,45 @@ export class IceArmorSkill extends Skill {
 //     }
 // }
 
-// export class ArcaneSaturationSkill extends Skill {
-//     constructor() {
-//         super("法力流系带", "onSpellCast", "施法后最大法力值 +2");
-//     }
+export class ArcaneSaturationSkill extends Skill {
+    constructor() {
+        super("法力流系带", "onSpellCast", "施法后临时最大法力值 +2");
+    }
 
-//     activate(caster) {
-//         const gain = 2 * this.level;
-//         caster.maxMp += gain;
-//         console.log(`🌊 法力流系带触发：最大蓝 +${gain}`);
-//     }
-// }
+    activate(caster) {
+        const gain = 1 + this.level;
+        caster.tempMaxMp += gain;
+        caster.mp += gain;
+        console.log(`🌊 法力流系带触发：最大法力值 +${gain}`);
+        BattleLog.write(`   🌊 法力流系带触发：最大法力值 +${gain}`);
+        BattleStats.addSkillUsage(caster, this.name, {
+                "临时最大法力值增加": gain,
+        });
+    }
 
-// export class ManaAddictionSkill extends Skill {
-//     constructor() {
-//         super("魔瘾渴求", "onNotEnoughMana", "缺蓝时消耗生命转为蓝和护盾");
-//     }
+}
 
-//     activate(caster) {
-//         const hpCost = Math.floor(caster.maxHp * 0.1);
-//         if (caster.hp > hpCost) {
-//             caster.hp -= hpCost;
-//             const gain = hpCost * 10 * this.level;
-//             caster.mp = Math.min(caster.maxMp, caster.mp + gain);
-//             caster.shield += hpCost;
-//             console.log(`🧪 魔瘾渴求触发：生命转化为 ${gain} 蓝和 ${hpCost} 护盾`);
-//         }
-//     }
-// }
+export class ManaAddictionSkill extends Skill {
+    constructor() {
+        super("魔瘾渴求", "onNotEnoughMana", "缺蓝时消耗生命转为蓝和护盾");
+    }
+
+    activate(caster) {
+        const hpCost = Math.floor(caster.maxHp * 0.1);
+        if (caster.hp > hpCost) {
+            caster.hp -= hpCost;
+            const gain = hpCost * (5 + this.level);
+            caster.mp = Math.min(caster.maxMp, caster.mp + gain);
+            caster.shield += hpCost;
+            console.log(`🧪 魔瘾渴求触发：生命转化为 ${gain} 蓝和 ${hpCost} 护盾`);
+            BattleLog.write(`   🧪 魔瘾渴求触发：生命转化为 ${gain} 蓝和 ${hpCost} 护盾`);
+            BattleStats.addSkillUsage(caster, this.name, {
+                    "消耗生命": hpCost,
+                    "法力回复": gain,
+                    "获得护盾": hpCost,
+            });
+        }
+    }
+}
 
 // 更多技能可以继续这样扩展...

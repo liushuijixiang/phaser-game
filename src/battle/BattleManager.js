@@ -90,7 +90,7 @@ export class BattleManager {
         this.updateAllUI();
 
         this.turnEvent = this.scene.time.addEvent({
-            delay: 1000 / this.battleSpeed, // 🎯 **影响战斗速度**
+            delay: 100 / this.battleSpeed, // 🎯 **影响战斗速度**
             loop: true,
             callback: () => {
                 if (this.isPaused) return; // 🎯 **暂停时不执行**
@@ -141,13 +141,34 @@ export class BattleManager {
         // setTimeout(() => this.nextTurn(), 1);
     }
 
+    /** 执行技能释放中扳机技能 */
+    triggerSpellCastEffects(player1,manaCost) {
+        player1.skills.forEach(skill => {
+            if (skill.type === "onSpellCast") {
+                skill.activate(player1,manaCost);
+            }
+        });
+    }
+
+    /** 执行缺蓝时回蓝技能 */
+    triggerNotEnoughManaEffects(player1) {
+        player1.skills.forEach(skill => {
+            if (skill.type === "onNotEnoughMana") {
+                skill.activate(player1);
+            }
+        });
+    }
+
     /** 执行战斗开始时技能 */
     triggerBattleStartEffects(player1,player2) {
         player1.skills.forEach(skill => {
 
             if (skill.type === "onBattleStart") {
                 skill.activate(player1,player2);
-                // if(skill.canUse){this.logSkillUsage(player1, skill.name);} // ⬅️ 添加统计
+                if(skill.canUse && skill.manaCost > 0){this.triggerSpellCastEffects(player1,skill.manaCost);}
+                else if(!skill.canUse && skill.manaCost > 0){
+                    if(player1.maxMp+player1.tempMaxMp > skill.manaCost){this.triggerNotEnoughManaEffects(player1);}
+                }
             }
 
             if (typeof skill.reset === 'function') {
@@ -162,7 +183,10 @@ export class BattleManager {
         player1.skills.forEach(skill => {
             if (skill.type === "onTurnStart") {
                 skill.activate(player1,player2);
-                // if(skill.canUse){this.logSkillUsage(player1, skill.name);} // ⬅️ 添加统计
+                if(skill.canUse && skill.manaCost > 0){this.triggerSpellCastEffects(player1,skill.manaCost);}
+                else if(!skill.canUse && skill.manaCost > 0){
+                    if(player1.maxMp+player1.tempMaxMp > skill.manaCost){this.triggerNotEnoughManaEffects(player1);}
+                }
             }
         });
     }
@@ -211,25 +235,23 @@ export class BattleManager {
         // 处理护盾
         damage = this.applyShield(defender, damage);
 
-        // 处理护甲
-        damage = this.applyArmor(defender, damage, attacker);
-
-        // 处理减伤技能
-        damage = this.triggerDefendEffects(defender,damage);
-
+        if(damage > 0 ) {
+            // 处理护甲
+            damage = this.applyArmor(defender, damage, attacker);
+            // 处理减伤技能
+            damage = this.triggerDefendEffects(defender,damage);
+        }
 
         // 吸血
         this.applyLifesteal(attacker, Math.min(damage,defender.hp));
 
         // 扣血
         defender.takeDamage(damage);
-
-        
         BattleStats.addDamageDealt(attacker, damage);
         BattleStats.addDamageTaken(defender, damage);
         BattleStats.addNormalAttack(attacker);
 
-        BattleLog.write(`   ${attacker.name} 普通攻击造成 ${damage} 点伤害`);
+        BattleLog.write(`⚔  ${attacker.name} 普通攻击造成 ${damage} 点伤害`);
 
         // 处理命中后特效
         this.triggerHitEffects(attacker, defender, damage);
@@ -248,6 +270,10 @@ export class BattleManager {
         player.skills.forEach(skill => {
             if (skill.type === "onDamageTaken") {
                 const result = skill.activate(player, finalDamage);
+                if(skill.canUse && skill.manaCost > 0){this.triggerSpellCastEffects(player,skill.manaCost);}
+                else if(!skill.canUse && skill.manaCost > 0){
+                    if(player.maxMp+player.tempMaxMp > skill.manaCost){this.triggerNotEnoughManaEffects(player);}
+                }
                 // 如果技能返回有效值，更新 finalDamage
                 if (typeof result === 'number') {
                     finalDamage = result;
@@ -262,9 +288,10 @@ export class BattleManager {
 
     /** 计算伤害 */
     calculateDamage(attacker, defender, baseAttack, multiplier, defenseDebuff) {
-        let crit = Math.random() * 100 < attacker.critChance;
+        let crit = Phaser.Math.Between(1,100) < attacker.critChance + attacker.tempCritChance;
         let critMultiplier = crit ? attacker.critDamage / 100 : 1;
         let damage = baseAttack * critMultiplier * multiplier;
+        console.log(`crit is ${crit} and attacker.critChance is ${attacker.critChance} and attacker.tempCritChance is ${attacker.tempCritChance}`);
         console.log(`   💥 伤害计算: ${baseAttack} -> ${Math.floor(damage)} (${crit ? "暴击!" : "普通攻击"})`);
         BattleLog.write(`   💥 伤害计算: ${baseAttack} -> ${Math.floor(damage)} (${crit ? "暴击!" : "普通攻击"})`);
         return Math.floor(damage);
@@ -309,9 +336,13 @@ export class BattleManager {
     /** 触发命中后特效 */
     triggerHitEffects(attacker, defender, damage) {
         attacker.skills.forEach(skill => {
-            if (skill.type === "onHit") {
-                skill.activate();
-                if(skill.canUse){this.logSkillUsage(attacker, skill.name);} // ⬅️ 添加统计
+            if (skill.type === "onAttack") {
+                skill.activate(attacker,defender);
+                if(skill.canUse && skill.manaCost > 0){this.triggerSpellCastEffects(attacker,skill.manaCost);}
+                else if(!skill.canUse && skill.manaCost > 0){
+                    if(attacker.maxMp+attacker.tempMaxMp > skill.manaCost){this.triggerNotEnoughManaEffects(attacker);}
+                }
+                // if(skill.canUse){this.logSkillUsage(attacker, skill.name);} // ⬅️ 添加统计
             }
         });
 
@@ -322,7 +353,7 @@ export class BattleManager {
         attacker.skills.forEach(skill => {
             if (skill.type === "onKill") {
                 skill.activate();
-                if(skill.canUse){this.logSkillUsage(attacker, skill.name);} // ⬅️ 添加统计
+                // if(skill.canUse){this.logSkillUsage(attacker, skill.name);} // ⬅️ 添加统计
             }
         });
 
@@ -334,7 +365,7 @@ export class BattleManager {
             player.skills.forEach(skill => {
                 if (skill.type === "onFatalDamage") {
                     skill.activate(player);
-                    if(skill.canUse){this.logSkillUsage(player, skill.name);} // ⬅️ 添加统计
+                    // if(skill.canUse){this.logSkillUsage(player, skill.name);} // ⬅️ 添加统计
                 }
             });
         }

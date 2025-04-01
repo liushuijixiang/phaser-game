@@ -26,14 +26,16 @@ export class Monster {
         this.speed = monsterData.speed;
 
         this.critChance = 0;
-        this.critDamage = 0;
+        this.critDamage = 150;
 
         //临时属性
         this.tempMaxHp = 0;
         this.tempMaxMp = 0;
-        this.tempAttack = 0;
-        this.attackCount = 0;
         this.tempArmor = 0;
+        this.attackCount = 0;
+
+        this.tempAttack = 0;
+        this.tempCritChance = 0;
         this.tempShield = 0;
         this.damageBoost = 1;
         this.defenseBoost = 1;
@@ -321,6 +323,7 @@ export class Monster {
 
     // 回合状态清除
     reset() {
+        this.tempCritChance = 0;
         this.tempAttack = 0;
         this.tempArmor = 0;
         this.tempShield = 0;

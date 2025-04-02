@@ -426,21 +426,21 @@ export class LevelSelectScene extends Phaser.Scene {
     /** 生成怪物 */
     generateMonster(type) {
         const current = this.mapData.flat().find(node => node.id === this.currentNode);
-        let hp =  type === "boss" ? Phaser.Math.Between(3*Math.floor(1+Math.pow(current.row, 2)/15)*30,3*Math.floor(1+Math.pow(current.row, 2)/15)*30+150) : type === "elite" ? Phaser.Math.Between(current.row*2*Math.floor(1+current.row/15)*30,2*Math.floor(1+Math.pow(current.row, 2)/15)*30+50) : Phaser.Math.Between(30*Math.floor(1+current.row/15),30*Math.floor(1+Math.pow(current.row, 2)/15)+50);
-        let attack = type === "boss" ? Phaser.Math.Between(10*Math.floor(1+Math.pow(current.row, 2)/15)+5,10*Math.floor(1+Math.pow(current.row, 2)/15)+5) : type === "elite" ? Phaser.Math.Between(current.row*6*Math.floor(1+current.row/15)+1,6*Math.floor(1+Math.pow(current.row, 2)/15)+15) : Phaser.Math.Between(3*Math.floor(1+current.row/15)+1,3*Math.floor(1+current.row/15)+5);
-        console.log(`node is ${Math.pow(current.row, 2)} and floor is ${this.floor} and hp and attack is ${hp} and ${attack}`);
+        let hp =  type === "boss" ? Phaser.Math.Between(3*Math.floor(1+Math.pow(current.row+this.floor-1, 2)/15)*30,3*Math.floor(1+Math.pow(current.row+this.floor-1, 2)/15)*30+150) : type === "elite" ? Phaser.Math.Between(current.row*2*Math.floor(1+current.row/15)*30,2*Math.floor(1+Math.pow(current.row+this.floor-1, 2)/15)*30+50) : Phaser.Math.Between(30*Math.floor(1+current.row/15),30*Math.floor(1+Math.pow(current.row+this.floor-1, 2)/15)+50);
+        let attack = type === "boss" ? Phaser.Math.Between(10*Math.floor(1+Math.pow(current.row+this.floor-1, 2)/15)+5,10*Math.floor(1+Math.pow(current.row+this.floor-1, 2)/15)+5) : type === "elite" ? Phaser.Math.Between(current.row*6*Math.floor(1+current.row/15)+1,6*Math.floor(1+Math.pow(current.row+this.floor-1, 2)/15)+15) : Phaser.Math.Between(3*Math.floor(1+current.row/15)+1,3*Math.floor(1+current.row/15)+5);
+        console.log(`node is ${Math.pow(current.row+this.floor-1, 2)} and floor is ${this.floor} and hp and attack is ${hp} and ${attack}`);
         let monsterData = {
             hp: hp*this.floor,
             maxHp: hp*this.floor,
             attack: attack*this.floor,
-            defense: type === "boss" ? 10 : type === "elite" ? 5 : 2,
+            armor: type === "boss" ? 10*this.floor : type === "elite" ? 5*this.floor : 2*this.floor,
 
             mp: 50,
             maxMp: 50,
             // attack: 30,
-            speed: 100 + this.floor,
+            speed: 100 + this.floor*current.row,
             shield: 0,
-            armor: 0
+            // armor: 0
         };
 
         // let monster = new Monster(monsterData.hp, monsterData.attack, monsterData.defense);

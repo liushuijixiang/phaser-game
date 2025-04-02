@@ -1,4 +1,4 @@
-import { HealSkill, BattleHealSkill, ManaRegenSkill, BattlefieldHealSkill, ManaTideSkill, BerserkerRageSkill, MomentumSkill, FirstStrikeSkill, ExecuteSkill, ArcaneBarrierSkill, ArcaneBarrierEchoSkill, MagicMissileSkill, ArcaneWisdomSkill, ManaBurnSkill, ArcaneEchoSkill, ArcaneReversalSkill, BarrierSkill, IceArmorSkill, ArcaneSaturationSkill, ManaAddictionSkill } from './Skill.js';
+import { HealSkill, BattleHealSkill, ManaRegenSkill, BattlefieldHealSkill, ManaTideSkill, BerserkerRageSkill, MomentumSkill, FirstStrikeSkill, ExecuteSkill, ArcaneBarrierSkill, SpeedSkill, AssassinSkill, ArcaneBarrierEchoSkill, MagicMissileSkill, ArcaneWisdomSkill, ManaBurnSkill, ArcaneEchoSkill, ArcaneReversalSkill, BarrierSkill, IceArmorSkill, ArcaneSaturationSkill, ManaAddictionSkill } from './Skill.js';
 
 export const SkillRegistry = [
   { class: HealSkill, weight: 10 },
@@ -11,6 +11,8 @@ export const SkillRegistry = [
   { class: FirstStrikeSkill, weight: 10 },
   { class: ExecuteSkill, weight: 10 },
   { class: ArcaneBarrierSkill, weight: 10 },
+  { class: SpeedSkill, weight: 10 },
+  { class: AssassinSkill, weight: 10 },
   { class: ArcaneBarrierEchoSkill, weight: 10 },
   { class: MagicMissileSkill, weight: 10 },
   { class: ArcaneWisdomSkill, weight: 10 },

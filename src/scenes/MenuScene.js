@@ -1,3 +1,14 @@
+import { BarrierSkill } from '../skills/Skill.js';
+import { BattlefieldHealSkill } from '../skills/Skill.js';
+import { ArcaneBarrierSkill } from '../skills/Skill.js';
+import { MagicMissileSkill } from '../skills/Skill.js';
+import { BattleHealSkill } from '../skills/Skill.js';
+import { ManaRegenSkill } from '../skills/Skill.js';
+import { BerserkerRageSkill } from '../skills/Skill.js';
+import { FirstStrikeSkill } from '../skills/Skill.js';
+import { AssassinSkill } from '../skills/Skill.js';
+
+
 export class MenuScene extends Phaser.Scene {
     constructor() {
         super({ key: 'MenuScene' });
@@ -69,19 +80,24 @@ export class MenuScene extends Phaser.Scene {
         const professions = [
             {
                 name: "战士",
-                bonus: { maxHp: 50, hp: 50, attack: 5, armor: 50 },
-                // skills: [new WarriorSkill()],
-                requiredForUpgrade: { maxHp: 200, attack: 30 }
+                bonus: { maxHp: 90, hp: 90, attack: 5, armor: 10 },
+                skills1: [new BarrierSkill()],
+                skills2: [new BattleHealSkill()],
+                requiredForUpgrade: { maxHp: 1000, attack: 30 }
             },
             {
                 name: "法师",
-                bonus: { maxMp: 160, mp: 160, attack: 5 },
+                bonus: { maxMp: 180, mp: 180},
+                skills1: [new ArcaneBarrierSkill()],
+                skills2: [new ManaRegenSkill()],
                 // skills: [new MageSkill()],
-                requiredForUpgrade: { maxMp: 200 }
+                requiredForUpgrade: { maxMp: 600 }
             },
             {
                 name: "刺客",
-                bonus: { speed: 50, attack: 50 },
+                bonus: { speed: 100, attack: 35},
+                skills1: [new FirstStrikeSkill()],
+                skills2: [new AssassinSkill()],
                 // skills: [new AssassinSkill()],
                 requiredForUpgrade: { speed: 150, attack: 40 }
             }
@@ -118,7 +134,8 @@ export class MenuScene extends Phaser.Scene {
                     });
 
                     if (!player.skills) player.skills = [];
-                    // player.skills.push(...prof.skills);
+                    player.skills.push(...prof.skills1);
+                    player.skills.push(...prof.skills2);
 
                     this.registry.set('playerData', player);
                     this.registry.set('profession', prof.name);

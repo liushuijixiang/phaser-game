@@ -77,13 +77,20 @@ export class BattleManager {
         console.log("⚔ 战斗开始!");
         BattleLog.write("⚔ 战斗开始!");
         
+        this.units = [this.player1, this.player2];
+
+        // 初始化行动槽
+        this.units.forEach(u => {
+            u.speedGauge = 0;
+            u.turnStartTriggered = false;
+        });
 
         //  触发战斗开始技能
         this.triggerBattleStartEffects(this.player1,this.player2);
         this.triggerBattleStartEffects(this.player2,this.player1);
 
         //  计算攻击顺序
-        this.calculateTurnOrder();
+        // this.calculateTurnOrder();
 
         //  开始回合循环
         // this.nextTurn();
@@ -101,13 +108,15 @@ export class BattleManager {
     }
 
     /** 计算战斗行动顺序（根据速度排序） */
-    calculateTurnOrder() {
-        this.turnQueue = [this.player1, this.player2].sort((a, b) => b.speed - a.speed);
-    }
+    // calculateTurnOrder() {
+        // this.turnQueue = [this.player1, this.player2].sort((a, b) => b.speed - a.speed);
+    // }
 
     /** 轮到角色行动 */
     nextTurn() {
         this.turnCount += 1
+        BattleLog.write(`   `);
+        BattleLog.write(`   `);
         BattleLog.write(`   ⚔ 第 ${this.turnCount} 回合`);
 
         if (this.player1.hp <= 0 || this.player2.hp <= 0) {
@@ -120,19 +129,59 @@ export class BattleManager {
 
 
 
-        let attacker = this.turnQueue.shift();
-        let defender = this.turnQueue[0];
+        // let attacker = this.turnQueue.shift();
+        // let defender = this.turnQueue[0];
 
-        // 🔹 **触发回合开始技能**
-        this.triggerTurnStartEffects(attacker,defender);
-        // this.triggerTurnStartEffects(this.player2);
+        // 每个单位充能
+        this.units.forEach(unit => {
+            unit.speedGauge += unit.speed+unit.tempSpeed; // 每回合充能
+            unit.turnStartTriggered = false;
+        });
 
-        console.log(`   🎯 ${attacker.name} 发动攻击!`);
-        BattleLog.write(`   🎯 ${attacker.name} 发动攻击!`);
-        this.executeAttack(attacker, defender);
+        // 按照行动槽大小排序
+        const readyUnits = this.units
+            .filter(u => u.speedGauge >= 100)
+            .sort((a, b) => b.speedGauge - a.speedGauge);
+
+        if (readyUnits.length === 0) {
+            // 若没人行动，则依然更新UI等
+            this.updateAllUI();
+            return;
+        }
+
+        let processedUnits = new Set(); // 本回合中触发过 onTurnStart 的单位
+
+        let loopCount = 0; // 防止死循环
+
+        while (true) {
+            // 找出可以行动的单位
+            const readyUnits = this.units
+                .filter(u => u.hp > 0 && u.speedGauge >= 100)
+                .sort((a, b) => b.speedGauge - a.speedGauge); // 快的优先出手
+
+            if (readyUnits.length === 0 || loopCount++ > 10) break;
+
+            for (let attacker of readyUnits) {
+                const defender = this.units.find(u => u !== attacker && u.hp > 0);
+                if (!defender) return;
+
+                attacker.speedGauge = Math.max(0,attacker.speedGauge - Math.max(Phaser.Math.Between(95,100),defender.speed));
+
+                if (!processedUnits.has(attacker)) {
+                    this.triggerTurnStartEffects(attacker, defender);
+                    processedUnits.add(attacker);
+                }
+
+                if(attacker.hp > 0){
+                    BattleLog.write(`   🎯 ${attacker.name} 发动攻击!`);
+                    this.executeAttack(attacker, defender);
+                }
+            }
+        }
+
 
         // 交换行动顺序
-        this.turnQueue.push(attacker);
+        // this.turnQueue.push(attacker);
 
         // 下一回合,回合内状态清除
         this.player1.reset();
@@ -167,7 +216,7 @@ export class BattleManager {
                 skill.activate(player1,player2);
                 if(skill.canUse && skill.manaCost > 0){this.triggerSpellCastEffects(player1,skill.manaCost);}
                 else if(!skill.canUse && skill.manaCost > 0){
-                    if(player1.maxMp+player1.tempMaxMp > skill.manaCost){this.triggerNotEnoughManaEffects(player1);}
+                    if(player1.maxMp+player1.tempMaxMp > skill.manaCost){this.triggerNotEnoughManaEffects(player1); skill.activate(player1,player2);}
                 }
             }
 
@@ -185,7 +234,7 @@ export class BattleManager {
                 skill.activate(player1,player2);
                 if(skill.canUse && skill.manaCost > 0){this.triggerSpellCastEffects(player1,skill.manaCost);}
                 else if(!skill.canUse && skill.manaCost > 0){
-                    if(player1.maxMp+player1.tempMaxMp > skill.manaCost){this.triggerNotEnoughManaEffects(player1);}
+                    if(player1.maxMp+player1.tempMaxMp > skill.manaCost){this.triggerNotEnoughManaEffects(player1); skill.activate(player1,player2);}
                 }
             }
         });
@@ -252,6 +301,7 @@ export class BattleManager {
         BattleStats.addNormalAttack(attacker);
 
         BattleLog.write(`   ⚔  ${attacker.name} 普通攻击造成 ${damage} 点伤害`);
+        BattleLog.write(`   `);
 
         // 处理命中后特效
         this.triggerHitEffects(attacker, defender, damage);
@@ -272,7 +322,7 @@ export class BattleManager {
                 const result = skill.activate(player, finalDamage);
                 if(skill.canUse && skill.manaCost > 0){this.triggerSpellCastEffects(player,skill.manaCost);}
                 else if(!skill.canUse && skill.manaCost > 0){
-                    if(player.maxMp+player.tempMaxMp > skill.manaCost){this.triggerNotEnoughManaEffects(player);}
+                    if(player.maxMp+player.tempMaxMp > skill.manaCost){this.triggerNotEnoughManaEffects(player);result = skill.activate(player, finalDamage);}
                 }
                 // 如果技能返回有效值，更新 finalDamage
                 if (typeof result === 'number') {
@@ -326,10 +376,10 @@ export class BattleManager {
     applyLifesteal(attacker, damage) {
         let heal = Math.floor(damage * attacker.lifesteal / 100);
         if (heal > 0) {
-            attacker.hp = Math.min(attacker.hp + heal, attacker.maxHp);
+            attacker.hp = Math.min(attacker.hp + heal, attacker.maxHp+attacker.tempMaxHp);
             console.log(`   🩸 ${attacker.name} 吸血 ${heal} 点!`);
             BattleLog.write(`   🩸 ${attacker.name} 吸血 ${heal} 点!`);
-            BattleStats.addHealingDone(attacker,healAmount);
+            BattleStats.addHealingDone(attacker,heal);
         }
     }
 
@@ -340,7 +390,7 @@ export class BattleManager {
                 skill.activate(attacker,defender);
                 if(skill.canUse && skill.manaCost > 0){this.triggerSpellCastEffects(attacker,skill.manaCost);}
                 else if(!skill.canUse && skill.manaCost > 0){
-                    if(attacker.maxMp+attacker.tempMaxMp > skill.manaCost){this.triggerNotEnoughManaEffects(attacker);}
+                    if(attacker.maxMp+attacker.tempMaxMp > skill.manaCost){this.triggerNotEnoughManaEffects(attacker);skill.activate(attacker,defender);}
                 }
                 // if(skill.canUse){this.logSkillUsage(attacker, skill.name);} // ⬅️ 添加统计
             }

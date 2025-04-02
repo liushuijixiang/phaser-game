@@ -34,7 +34,9 @@ export class Monster {
         this.tempArmor = 0;
         this.attackCount = 0;
 
+        this.lifesteal = 0;
         this.tempAttack = 0;
+        this.tempSpeed = 0;
         this.tempCritChance = 0;
         this.tempShield = 0;
         this.damageBoost = 1;
@@ -323,9 +325,11 @@ export class Monster {
 
     // 回合状态清除
     reset() {
+        this.lifesteal = 0;
         this.tempCritChance = 0;
         this.tempAttack = 0;
-        this.tempArmor = 0;
+        this.tempSpeed = 0;
+        // this.tempArmor = 0;
         this.tempShield = 0;
         this.damageBoost = 1;
         this.defenseBoost = 1;

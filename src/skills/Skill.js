@@ -165,8 +165,8 @@ export class ManaTideSkill extends Skill {
     }
 
     activate(caster) {
-        const regen = Math.floor(caster.maxMp * 0.05 * this.level);
-        caster.mp = Math.min(caster.maxMp, caster.mp + regen);
+        const regen = Math.floor((caster.maxMp+caster.tempMaxMp) * 0.05 * this.level);
+        caster.mp = Math.min((caster.maxMp+caster.tempMaxMp), caster.mp + regen);
         console.log(`\ud83d\udd04 法力潮汐恢复 ${regen} MP`);
         BattleLog.write(`   \ud83d\udd04 法力潮汐恢复 ${regen} MP`);
         BattleStats.addSkillUsage(caster, this.name, {
@@ -183,19 +183,19 @@ export class BerserkerRageSkill extends Skill {
 
     activate(caster) {
         this.boost = Math.max((2 - Math.max(caster.hp,0) / Math.max(caster.maxHp+caster.tempMaxHp,0)),1) - 1;
-        caster.damageBoost += this.boost*this.level;
+        caster.damageBoost += this.boost*(1+0.1*this.level);
         console.log(`\ud83d\udd04 血性狂乱伤害增幅 ${this.boost*this.level*100} %`);
         const stats = BattleStats.getStats(caster);
         if(stats.skillUsage["血性狂乱"]) {
             BattleStats.addSkillUsage(caster, this.name, {
-                "平均伤害增幅": stats.skillUsage["血性狂乱"].effects["平均伤害增幅"]? (stats.skillUsage["血性狂乱"].effects["平均伤害增幅"]*stats.skillUsage["血性狂乱"].count + this.boost)/(stats.skillUsage["血性狂乱"].count+1)-stats.skillUsage["血性狂乱"].effects["平均伤害增幅"] : this.boost
+                "平均伤害增幅": stats.skillUsage["血性狂乱"].effects["平均伤害增幅"]? (stats.skillUsage["血性狂乱"].effects["平均伤害增幅"]*stats.skillUsage["血性狂乱"].count + this.boost)/(stats.skillUsage["血性狂乱"].count+1)-stats.skillUsage["血性狂乱"].effects["平均伤害增幅"] : this.boostthis.boost*(1+0.1*this.level)
             });
         }else {
             BattleStats.addSkillUsage(caster, this.name, {
-                "平均伤害增幅": this.boost
+                "平均伤害增幅": this.boost*(1+0.1*this.level)
             });
         }
-        BattleLog.write(`   \ud83d\udd04 血性狂乱伤害增幅 ${this.boost*this.level*100} %`);
+        BattleLog.write(`   \ud83d\udd04 血性狂乱伤害增幅 ${this.boost*(1+0.1*this.level)} %`);
 
     }
 
@@ -231,11 +231,11 @@ export class FirstStrikeSkill extends Skill {
 
     activate(caster) {
         if(caster.attackCount < this.level) {
-            console.log(`\u2728 抢攻发动，${caster.name}下一次攻击必定造成暴击！`);
-            BattleLog.write(`   \u2728 抢攻发动，${caster.name}下一次攻击必定造成暴击！`);
+            console.log(`\u2728 抢攻发动，${caster.name}本回合内攻击必定造成暴击！`);
+            BattleLog.write(`   \u2728 抢攻发动，${caster.name}本回合内攻击必定造成暴击！`);
             caster.tempCritChance = 100;
             BattleStats.addSkillUsage(caster, this.name, {
-                "暴击增益次数": 1
+                "暴击增益回合数": 1
             });
         }
     }
@@ -286,6 +286,41 @@ export class ArcaneBarrierSkill extends Skill {
     }
 }
 
+export class SpeedSkill extends Skill {
+    constructor() {
+        super("疾驰", "onBattleStart", "战斗开始时，获得100点临时速度，持续到第一回合结束");
+    }
+
+    activate(caster) {
+            caster.tempSpeed += 100 + 50*(this.level - 1);
+            console.log(`✈️ ${caster.name} 激活疾驰，获得 ${100 + 50*(this.level - 1)} 速度`);
+            BattleLog.write(`   ✈️ ${caster.name} 激活疾驰，获得 ${100 + 50*(this.level - 1)} 速度`);
+            BattleStats.addSkillUsage(caster, this.name, {
+                "获得速度": 100 + 50*(this.level - 1)
+            });
+    }
+}
+
+export class AssassinSkill extends Skill {
+    constructor() {
+        super("舍身一击", "onBattleStart", "战斗开始时，将所有生命转化为护盾，本回合攻击拥有吸血");
+    }
+
+    activate(caster) {
+            caster.lifesteal += 100*this.level;
+            console.log(`✈️ ${caster.name} 激活舍身一击，获得 ${caster.hp} 护盾，本回合攻击拥有吸血`);
+            BattleLog.write(`   ✈️ ${caster.name} 激活舍身一击，获得 ${caster.hp} 护盾，本回合攻击拥有吸血`);
+            BattleStats.addSkillUsage(caster, this.name, {
+                "获得护盾": caster.hp,
+                "获得吸血": 100*this.level
+            });
+
+            caster.shield += caster.hp;
+            caster.hp = 1;
+    }
+}
+
+
 export class ArcaneBarrierEchoSkill extends Skill {
     constructor() {
         super("次生护盾", "onSpellCast", "消耗最大法力值时，获得等量的临时护盾");
@@ -307,7 +342,7 @@ export class MagicMissileSkill extends Skill {
     }
 
     activate(caster, target) {
-        this.manaCost = Math.floor(caster.maxMp * 0.1);
+        this.manaCost = Math.floor((caster.maxMp+caster.tempMaxMp) * 0.1);
         this.checkCanUse(caster);
         if (this.canUse) {
             caster.mp -= this.manaCost;
@@ -332,7 +367,7 @@ export class ArcaneWisdomSkill extends Skill {
 
     activate(caster) {
         const restore = 5 + (this.level - 1) * 2;
-        caster.mp = Math.min(caster.maxMp, caster.mp + restore);
+        caster.mp = Math.min(caster.maxMp+caster.tempMaxMp, caster.mp + restore);
         console.log(`🔄 激活奥术智慧， ${caster.name} 恢复 ${restore} 点法力值`);
         BattleLog.write(`   🔄 激活奥术智慧， ${caster.name} 恢复 ${restore} 点法力值`);
         BattleStats.addSkillUsage(caster, this.name, {
@@ -352,7 +387,7 @@ export class ManaBurnSkill extends Skill {
         this.checkCanUse(caster);
         if (this.canUse) {
             caster.mp -= this.manaCost;
-            let addattack = caster.attack * (this.level+1);
+            let addattack = caster.attack * (0.1*this.level+1);
             caster.tempAttack += addattack;
             console.log(`🔥 ${caster.name} 激活法力燃烧，消耗 ${this.manaCost} 法力，攻击力翻倍至 ${caster.attack+caster.tempAttack}`);
             BattleLog.write(`   🔥 ${caster.name} 激活法力燃烧，消耗 ${this.manaCost} 法力，攻击力翻倍至 ${caster.attack+caster.tempAttack}`);
@@ -410,10 +445,10 @@ export class BarrierSkill extends Skill {
 
     activate(caster, damage) {
         caster.tempArmor += this.level + Math.floor(damage*0.1*this.level);
-        console.log(`🛡️ 自适应护甲触发，获得${Math.floor(damage*0.1*this.level)}临时护甲`);
-        BattleLog.write(`   🛡️ 自适应护甲触发，获得${Math.floor(damage*0.1*this.level)}临时护甲`);
+        console.log(`🛡️ 自适应护甲触发，获得${this.level + Math.floor(damage*0.1*this.level)}临时护甲`);
+        BattleLog.write(`   🛡️ 自适应护甲触发，获得${this.level + Math.floor(damage*0.1*this.level)}临时护甲`);
         BattleStats.addSkillUsage(caster, this.name, {
-            "获得护甲": Math.floor(damage*0.1*this.level),
+            "获得护甲": Math.floor(this.level + damage*0.1*this.level),
         });
         return damage;
     }
@@ -493,7 +528,7 @@ export class ManaAddictionSkill extends Skill {
         if (caster.hp > hpCost) {
             caster.hp -= hpCost;
             const gain = hpCost * (5 + this.level);
-            caster.mp = Math.min(caster.maxMp, caster.mp + gain);
+            caster.mp = Math.min(caster.maxMp+caster.tempMaxMp, caster.mp + gain);
             caster.shield += hpCost;
             console.log(`🧪 魔瘾渴求触发：生命转化为 ${gain} 蓝和 ${hpCost} 护盾`);
             BattleLog.write(`   🧪 魔瘾渴求触发：生命转化为 ${gain} 蓝和 ${hpCost} 护盾`);

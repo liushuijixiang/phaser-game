@@ -36,6 +36,8 @@ export class Player {
         this.attackCount = 0;
 
         //临时属性,回合结束清除
+        this.lifesteal = 0;
+        this.tempSpeed = 0;
         this.tempCritChance = 0;
         this.tempAttack = 0;
         this.tempArmor = 0;
@@ -298,9 +300,11 @@ export class Player {
 
     // 回合状态清除
     reset() {
+        this.lifesteal = 0;
+        this.tempSpeed = 0;
         this.tempCritChance = 0;
         this.tempAttack = 0;
-        this.tempArmor = 0;
+        // this.tempArmor = 0;
         this.tempShield = 0;
         this.damageBoost = 1;
         this.defenseBoost = 1;

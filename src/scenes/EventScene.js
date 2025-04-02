@@ -49,12 +49,33 @@ export class EventScene extends Phaser.Scene {
                         }
                     };
                 },
-                () => ({ text: "💰 金币 +40", effect: () => this.addGold(40) }),
+                () => {
+                    const [skill] = this.getRandomSkill(1, { rarity: 'common' });
+                    return {
+                        text: `⭐ 学会技能：${skill.name}`,
+                        effect: () => {
+                            this.addSkill(skill);
+                            this.log(`获得技能：${skill.name}`);
+                        }
+                    };
+                },
+                () => ({ text: "💰 金币 +50", effect: () => this.addGold(50) }),
                 () => ({ text: "💙 魔力 +20", effect: () => {this.modifyPlayer('maxMp', 20);this.modifyPlayer('mp', 20)}}),
                 () => ({ text: "🧱 护甲 +5", effect: () => this.modifyPlayer('armor', 5) }),
+                () => ({ text: "✈️ 速度 +5", effect: () => this.modifyPlayer('speed', 5) }),
             ],
 
             victory_elite: [
+                () => {
+                    const [skill] = this.getRandomSkill(1, { rarity: 'rare' });
+                    return {
+                        text: `💥 学会技能：${skill.name}`,
+                        effect: () => {
+                            this.addSkill(skill);
+                            this.log(`获得技能：${skill.name}`);
+                        }
+                    };
+                },
                 () => {
                     const [skill] = this.getRandomSkill(1, { rarity: 'rare' });
                     return {
@@ -80,6 +101,7 @@ export class EventScene extends Phaser.Scene {
                 () => ({ text: "💰 金币 +100", effect: () => this.addGold(100) }),
                 // () => ({ text: "💍 获得稀有饰品（占位）", effect: () => this.log("获得饰品：龙鳞指环") }),
                 () => ({ text: "⚔️ 攻击 +30", effect: () => this.modifyPlayer('attack', 5) }),
+                () => ({ text: "✈️ 速度 +15", effect: () => this.modifyPlayer('speed', 15) }),
                 () => ({ text: "💙 魔力 +60", effect: () => {this.modifyPlayer('maxMp', 60);this.modifyPlayer('mp', 60)}}),
             ],
 
@@ -91,7 +113,7 @@ export class EventScene extends Phaser.Scene {
             ],
 
             event: [
-                () => ({ text: "❤️ 回复 30% 生命", effect: () => this.healPercent(0.3) }),
+                () => ({ text: "❤️ 回复生命与法力", effect: () => this.buyheal() }),
                 () => ({ text: "⚔️ 遭遇伏击战！", effect: () => this.scene.start('GameScene', { enemyType: "ambush" }) }),
                 // () => ({ text: "💎 获得稀有饰品（占位）", effect: () => this.log("获得：冰魄项链") }),
                 () => {

@@ -86,8 +86,9 @@ export class EventScene extends Phaser.Scene {
                 () => {
                     const [skill] = this.getRandomSkill(1, { rarity: 'rare' });
                     return {
-                        text: `💥 学会技能：${skill.name}`,
+                        text: `💥 获得并升级技能：${skill.name}`,
                         effect: () => {
+                            this.addSkill(skill);
                             this.addSkill(skill);
                             this.log(`获得技能：${skill.name}`);
                         }
@@ -96,8 +97,9 @@ export class EventScene extends Phaser.Scene {
                 () => {
                     const [skill] = this.getRandomSkill(1, { rarity: 'rare' });
                     return {
-                        text: `💥 学会技能：${skill.name}`,
+                        text: `💥 获得并升级技能：${skill.name}`,
                         effect: () => {
+                            this.addSkill(skill);
                             this.addSkill(skill);
                             this.log(`获得技能：${skill.name}`);
                         }
@@ -106,8 +108,9 @@ export class EventScene extends Phaser.Scene {
                 () => {
                     const [skill] = this.getRandomSkill(1, { rarity: 'rare' });
                     return {
-                        text: `💥 学会技能：${skill.name}`,
+                        text: `💥 获得并升级技能：${skill.name}`,
                         effect: () => {
+                            this.addSkill(skill);
                             this.addSkill(skill);
                             this.log(`获得技能：${skill.name}`);
                         }

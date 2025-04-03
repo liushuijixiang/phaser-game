@@ -20,6 +20,23 @@ export class LevelSelectScene extends Phaser.Scene {
 
         window.addEventListener('resize', this._resizeHandler, false);
 
+        this.statusText = this.add.text(100*window.innerWidth/600-70, 180*window.innerHeight/800, '', {
+            fontSize: '24px',
+            fill: '#fff'
+        }).setScrollFactor(0);
+
+        this.updateStatusBar = () => {
+            const player = this.registry.get('playerData');
+            this.statusText.setText(`
+❤️ ${player.hp}/${player.maxHp} 
+🔵 ${player.mp}/${player.maxMp}`);
+        };
+        this.avatar = this.add.image(100*window.innerWidth/600, 100*window.innerHeight/800, 'ml').setInteractive();
+        this.avatar.setScale(0.2);
+        this.avatar.on('pointerdown', () => this.showPlayerDetail());
+        this.avatar.setScrollFactor(0); 
+        this.updateStatusBar();
+
         // 创建地图容器
         this.mapContainer = this.add.container(0, 0);
 
@@ -70,6 +87,15 @@ export class LevelSelectScene extends Phaser.Scene {
         this.centerOnCurrentNode(); // 👈 添加这一行
 
         this.events.on('shutdown', this.shutdown, this);
+    }
+
+    showPlayerDetail() {
+        const playerData = this.registry.get('playerData');
+        this.scene.pause(); // 暂停当前场景
+        this.scene.launch('PlayerDetailScene', {
+            playerData: playerData,
+            returnScene: this.scene.key // 当前场景的 key
+        });
     }
 
     shutdown() {
@@ -449,8 +475,10 @@ export class LevelSelectScene extends Phaser.Scene {
             mp: 50,
             maxMp: 50,
             // attack: 30,
-            speed: 100 + this.floor*current.row,
+            speed: 85 + this.floor*15 + current.row,
             shield: 0,
+            critChance: 2*this.floor,
+            critDamage: 150+this.floor
             // armor: 0
         };
 
@@ -500,6 +528,15 @@ export class LevelSelectScene extends Phaser.Scene {
     resizeGame() {
         const width = window.innerWidth;
         const height = window.innerHeight;
+
+        // 更新头像位置
+        if (this.avatar) {
+            this.avatar.setPosition(100*width/600, 100*height/800);
+        }
+
+        if( this.statusText ) {
+            this.statusText.setPosition (100*window.innerWidth/600-70, 180*window.innerHeight/800);
+        }
 
         // 1. 更新 Phaser 的画布尺寸
         this.scale.resize(width, height);

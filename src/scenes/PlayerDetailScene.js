@@ -34,6 +34,8 @@ export class PlayerDetailScene extends Phaser.Scene {
             `⚔️ 攻击：${player.attack}`,
             `🛡 护甲：${player.armor}`,
             `💨 速度：${player.speed}`,
+            `⚔️ 暴击：${player.critChance}`,
+            `⚔️ 爆伤：${player.critDamage}`,
             '',
             '✨ 技能：',
             ...skills.map(s => ` - ${s.name}（Lv.${s.level}）\n${s.description}`)
@@ -55,6 +57,7 @@ export class PlayerDetailScene extends Phaser.Scene {
         }).setInteractive().setOrigin(0.5);
 
         this.closeBtn.on('pointerdown', () => {
+            window.removeEventListener('resize', this._resizeHandler);
             this.scene.stop();
             this.scene.resume(this.returnScene);
         });

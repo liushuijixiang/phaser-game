@@ -290,6 +290,8 @@ export class EventScene extends Phaser.Scene {
         } else {
             this.showToast('金币不足 ❌');
         }
+
+        this.updateStatusBar();
     }
 
     refreshShop() {
@@ -438,6 +440,8 @@ export class EventScene extends Phaser.Scene {
                     this.setGold(this.gold - item.price);
                     item.effect();
                     this.showToast(`购买成功: ${item.name}`);
+                    
+                    this.updateStatusBar();
 
                     btn.disableInteractive().setAlpha(0.5).setText(`${item.name}\n已售出`);
                 

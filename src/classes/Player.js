@@ -26,8 +26,8 @@ export class Player {
         this.speed = playerData.speed;
         this.skills = playerData.skills ? playerData.skills : [];
 
-        this.critChance = 0;
-        this.critDamage = 150;
+        this.critChance = playerData.critChance;
+        this.critDamage = playerData.critDamage;
 
         //临时属性,战斗结束清除
         this.tempMaxHp = 0;

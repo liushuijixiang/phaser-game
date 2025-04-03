@@ -59,7 +59,9 @@ export class MenuScene extends Phaser.Scene {
                 attack: attack,
                 speed: 100,
                 shield: 0,
-                armor: 0
+                armor: 0,
+                critChance: 0,
+                critDamage: 150
             });
 
             hp = Phaser.Math.Between(1,50);

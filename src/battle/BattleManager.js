@@ -319,7 +319,7 @@ export class BattleManager {
 
         player.skills.forEach(skill => {
             if (skill.type === "onDamageTaken") {
-                const result = skill.activate(player, finalDamage);
+                let result = skill.activate(player, finalDamage);
                 if(skill.canUse && skill.manaCost > 0){this.triggerSpellCastEffects(player,skill.manaCost);}
                 else if(!skill.canUse && skill.manaCost > 0){
                     if(player.maxMp+player.tempMaxMp > skill.manaCost){this.triggerNotEnoughManaEffects(player);result = skill.activate(player);}

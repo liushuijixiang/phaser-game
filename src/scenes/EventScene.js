@@ -8,6 +8,7 @@ export class EventScene extends Phaser.Scene {
 
     create(data) {
         // 来源类型：来自战斗胜利 or 事件节点
+        this.floor = this.registry.get("floor");
         const from = data.from || 'event';
         this.from = data.from || 'event';
 
@@ -113,7 +114,11 @@ export class EventScene extends Phaser.Scene {
             ],
 
             event: [
-                () => ({ text: "❤️ 回复生命与法力", effect: () => this.buyHeal() }),
+                () => ({ text: "❤️ 回复生命与法力", effect: () => {
+                    const player = this.registry.get('playerData');
+                    player.hp = player.maxHp;
+                    player.mp = player.maxMp;
+                    this.registry.set('playerData', player);} }),
                 () => ({ text: "⚔️ 遭遇伏击战！", effect: () => this.scene.start('GameScene', { enemyType: "ambush" }) }),
                 // () => ({ text: "💎 获得稀有饰品（占位）", effect: () => this.log("获得：冰魄项链") }),
                 () => {
@@ -158,23 +163,24 @@ export class EventScene extends Phaser.Scene {
                     });
             });
 
-            this.logBtn = this.add.text(150*window.innerWidth/800, 470*window.innerHeight/600, '📜 查看战斗日志', {
-                fontSize: '24px',
-                fill: '#0f0',
-                backgroundColor: '#333',
-                padding: { left: 10, right: 10, top: 5, bottom: 5 }
-            }).setOrigin(0.5).setInteractive();
+            if(from !== 'event') {
+                this.logBtn = this.add.text(150*window.innerWidth/800, 470*window.innerHeight/600, '📜 查看战斗日志', {
+                    fontSize: '24px',
+                    fill: '#0f0',
+                    backgroundColor: '#333',
+                    padding: { left: 10, right: 10, top: 5, bottom: 5 }
+                }).setOrigin(0.5).setInteractive();
 
-            this.logBtn.on('pointerdown', () => {
-                this.logBtn.destroy();
-                if (this.optionstext && Array.isArray(this.optionstext)) {
-                    this.optionstext.forEach((t, i) => {
-                        t.destroy();
-                    });
-                }
-                this.showBattleLogWithDOM();
-            });
-
+                this.logBtn.on('pointerdown', () => {
+                    this.logBtn.destroy();
+                    if (this.optionstext && Array.isArray(this.optionstext)) {
+                        this.optionstext.forEach((t, i) => {
+                            t.destroy();
+                        });
+                    }
+                    this.showBattleLogWithDOM();
+                });
+            }
         }
         this.drawGoldDisplay();
         

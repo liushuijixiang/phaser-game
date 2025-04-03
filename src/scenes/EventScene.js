@@ -113,7 +113,7 @@ export class EventScene extends Phaser.Scene {
             ],
 
             event: [
-                () => ({ text: "❤️ 回复生命与法力", effect: () => this.buyheal() }),
+                () => ({ text: "❤️ 回复生命与法力", effect: () => this.buyHeal() }),
                 () => ({ text: "⚔️ 遭遇伏击战！", effect: () => this.scene.start('GameScene', { enemyType: "ambush" }) }),
                 // () => ({ text: "💎 获得稀有饰品（占位）", effect: () => this.log("获得：冰魄项链") }),
                 () => {
@@ -294,14 +294,14 @@ export class EventScene extends Phaser.Scene {
             {
                 name: '攻击 +10',
                 type: 'stat',
-                price: 35,
+                price: 35+this.floor*5,
                 weight: 10,
                 effect: () => this.modifyPlayer('attack', 10)
             },
             {
                 name: '生命 +50',
                 type: 'stat',
-                price: 30,
+                price: 30+this.floor*5,
                 weight: 10,
                 effect: () => {
                     this.modifyPlayer('maxHp', 50);
@@ -311,14 +311,14 @@ export class EventScene extends Phaser.Scene {
             {
                 name: '防御 +5',
                 type: 'stat',
-                price: 25,
+                price: 25+this.floor*5,
                 weight: 10,
                 effect: () => this.modifyPlayer('armor', 5)
             },
             {
                 name: '蓝量 +20',
                 type: 'stat',
-                price: 30,
+                price: 30+this.floor*5,
                 weight: 10,
                 effect: () => {
                     this.modifyPlayer('maxMp', 20);
@@ -326,9 +326,36 @@ export class EventScene extends Phaser.Scene {
                 }
             },
             {
+                name: '速度 +5',
+                type: 'stat',
+                price: 40+this.floor*5,
+                weight: 10,
+                effect: () => {
+                    this.modifyPlayer('speed', 5);
+                }
+            },
+            {
+                name: '暴击 +2',
+                type: 'stat',
+                price: 65+this.floor*10,
+                weight: 10,
+                effect: () => {
+                    this.modifyPlayer('critChance', 2);
+                }
+            },
+            {
+                name: '暴伤 +2',
+                type: 'stat',
+                price: 65+this.floor*10,
+                weight: 10,
+                effect: () => {
+                    this.modifyPlayer('critDamage', 2);
+                }
+            },
+            {
                 name: `⭐ 技能：${skill.name}`,
                 type: 'skill',
-                price: 40,
+                price: 40+this.floor*5,
                 weight: 25,
                 effect: (scene) => {
                     

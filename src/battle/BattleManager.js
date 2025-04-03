@@ -322,7 +322,7 @@ export class BattleManager {
                 const result = skill.activate(player, finalDamage);
                 if(skill.canUse && skill.manaCost > 0){this.triggerSpellCastEffects(player,skill.manaCost);}
                 else if(!skill.canUse && skill.manaCost > 0){
-                    if(player.maxMp+player.tempMaxMp > skill.manaCost){this.triggerNotEnoughManaEffects(player);result = skill.activate(player, finalDamage);}
+                    if(player.maxMp+player.tempMaxMp > skill.manaCost){this.triggerNotEnoughManaEffects(player);result = skill.activate(player);}
                 }
                 // 如果技能返回有效值，更新 finalDamage
                 if (typeof result === 'number') {

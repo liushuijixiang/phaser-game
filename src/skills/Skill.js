@@ -383,11 +383,11 @@ export class ManaBurnSkill extends Skill {
     }
 
     activate(caster) {
-        this.manaCost = caster.attack;
+        this.manaCost = Math.floor(caster.attack);
         this.checkCanUse(caster);
         if (this.canUse) {
             caster.mp -= this.manaCost;
-            let addattack = caster.attack * (0.1*this.level+1);
+            let addattack = Math.floor(caster.attack * (0.1*this.level+1));
             caster.tempAttack += addattack;
             console.log(`🔥 ${caster.name} 激活法力燃烧，消耗 ${this.manaCost} 法力，攻击力翻倍至 ${caster.attack+caster.tempAttack}`);
             BattleLog.write(`   🔥 ${caster.name} 激活法力燃烧，消耗 ${this.manaCost} 法力，攻击力翻倍至 ${caster.attack+caster.tempAttack}`);

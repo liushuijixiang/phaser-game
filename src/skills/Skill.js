@@ -188,7 +188,7 @@ export class BerserkerRageSkill extends Skill {
         const stats = BattleStats.getStats(caster);
         if(stats.skillUsage["血性狂乱"]) {
             BattleStats.addSkillUsage(caster, this.name, {
-                "平均伤害增幅": stats.skillUsage["血性狂乱"].effects["平均伤害增幅"]? (stats.skillUsage["血性狂乱"].effects["平均伤害增幅"]*stats.skillUsage["血性狂乱"].count + this.boost)/(stats.skillUsage["血性狂乱"].count+1)-stats.skillUsage["血性狂乱"].effects["平均伤害增幅"] : this.boostthis.boost*(1+0.1*this.level)
+                "平均伤害增幅": stats.skillUsage["血性狂乱"].effects["平均伤害增幅"]? (stats.skillUsage["血性狂乱"].effects["平均伤害增幅"]*stats.skillUsage["血性狂乱"].count + this.boost)/(stats.skillUsage["血性狂乱"].count+1)-stats.skillUsage["血性狂乱"].effects["平均伤害增幅"] : this.boost*(1+0.1*this.level)
             });
         }else {
             BattleStats.addSkillUsage(caster, this.name, {

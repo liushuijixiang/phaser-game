@@ -87,9 +87,9 @@ export class MenuScene extends Phaser.Scene {
             },
             {
                 name: "法师",
-                bonus: { maxMp: 180, mp: 180},
+                bonus: { maxMp: 230, mp: 230},
                 skills1: [new ArcaneBarrierSkill()],
-                skills2: [new ManaRegenSkill()],
+                skills2: [new MagicMissileSkill()],
                 // skills: [new MageSkill()],
                 requiredForUpgrade: { maxMp: 600 }
             },

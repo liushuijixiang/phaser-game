@@ -6,7 +6,7 @@ export const SkillRegistry = [
   { class: ManaRegenSkill, weight: 10 },
   { class: BattlefieldHealSkill, weight: 10 },
   { class: ManaTideSkill, weight: 10 },
-  { class: BerserkerRageSkill, weight: 10 },
+  { class: BerserkerRageSkill, weight: 1000 },
   { class: MomentumSkill, weight: 10 },
   { class: FirstStrikeSkill, weight: 10 },
   { class: ExecuteSkill, weight: 10 },

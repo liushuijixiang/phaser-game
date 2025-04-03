@@ -216,7 +216,7 @@ export class BattleManager {
                 skill.activate(player1,player2);
                 if(skill.canUse && skill.manaCost > 0){this.triggerSpellCastEffects(player1,skill.manaCost);}
                 else if(!skill.canUse && skill.manaCost > 0){
-                    if(player1.maxMp+player1.tempMaxMp > skill.manaCost){this.triggerNotEnoughManaEffects(player1); skill.activate(player1,player2);}
+                    if(player1.maxMp+player1.tempMaxMp > skill.manaCost){this.triggerNotEnoughManaEffects(player1); skill.activate(player1,player2);if(skill.canUse && skill.manaCost > 0){this.triggerSpellCastEffects(player1,skill.manaCost);}}
                 }
             }
 
@@ -234,7 +234,7 @@ export class BattleManager {
                 skill.activate(player1,player2);
                 if(skill.canUse && skill.manaCost > 0){this.triggerSpellCastEffects(player1,skill.manaCost);}
                 else if(!skill.canUse && skill.manaCost > 0){
-                    if(player1.maxMp+player1.tempMaxMp > skill.manaCost){this.triggerNotEnoughManaEffects(player1); skill.activate(player1,player2);}
+                    if(player1.maxMp+player1.tempMaxMp > skill.manaCost){this.triggerNotEnoughManaEffects(player1); skill.activate(player1,player2);if(skill.canUse && skill.manaCost > 0){this.triggerSpellCastEffects(player1,skill.manaCost);}}
                 }
             }
         });
@@ -322,7 +322,7 @@ export class BattleManager {
                 let result = skill.activate(player, finalDamage);
                 if(skill.canUse && skill.manaCost > 0){this.triggerSpellCastEffects(player,skill.manaCost);}
                 else if(!skill.canUse && skill.manaCost > 0){
-                    if(player.maxMp+player.tempMaxMp > skill.manaCost){this.triggerNotEnoughManaEffects(player);result = skill.activate(player);}
+                    if(player.maxMp+player.tempMaxMp > skill.manaCost){this.triggerNotEnoughManaEffects(player);result = skill.activate(player);if(skill.canUse && skill.manaCost > 0){this.triggerSpellCastEffects(player,skill.manaCost);}}
                 }
                 // 如果技能返回有效值，更新 finalDamage
                 if (typeof result === 'number') {
@@ -390,7 +390,7 @@ export class BattleManager {
                 skill.activate(attacker,defender);
                 if(skill.canUse && skill.manaCost > 0){this.triggerSpellCastEffects(attacker,skill.manaCost);}
                 else if(!skill.canUse && skill.manaCost > 0){
-                    if(attacker.maxMp+attacker.tempMaxMp > skill.manaCost){this.triggerNotEnoughManaEffects(attacker);skill.activate(attacker,defender);}
+                    if(attacker.maxMp+attacker.tempMaxMp > skill.manaCost){this.triggerNotEnoughManaEffects(attacker);skill.activate(attacker,defender);if(skill.canUse && skill.manaCost > 0){this.triggerSpellCastEffects(attacker,skill.manaCost);}}
                 }
                 // if(skill.canUse){this.logSkillUsage(attacker, skill.name);} // ⬅️ 添加统计
             }

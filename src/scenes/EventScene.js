@@ -101,7 +101,7 @@ export class EventScene extends Phaser.Scene {
                 () => ({ text: "🧱 护甲 +15", effect: () => this.modifyPlayer('armor', 15) }),
                 () => ({ text: "💰 金币 +100", effect: () => this.addGold(100) }),
                 // () => ({ text: "💍 获得稀有饰品（占位）", effect: () => this.log("获得饰品：龙鳞指环") }),
-                () => ({ text: "⚔️ 攻击 +30", effect: () => this.modifyPlayer('attack', 5) }),
+                () => ({ text: "⚔️ 攻击 +30", effect: () => this.modifyPlayer('attack', 30) }),
                 () => ({ text: "✈️ 速度 +15", effect: () => this.modifyPlayer('speed', 15) }),
                 () => ({ text: "💙 魔力 +60", effect: () => {this.modifyPlayer('maxMp', 60);this.modifyPlayer('mp', 60)}}),
             ],
@@ -109,7 +109,7 @@ export class EventScene extends Phaser.Scene {
             victory_boss: [
                 () => ({ text: "🦴 学会传说技能：神灭一击", effect: () => this.log("获得技能：神灭一击！") }),
                 () => ({ text: "💠 传说饰品：龙魂指环", effect: () => this.log("获得饰品：龙魂指环") }),
-                () => ({ text: "🧬 全属性 +2", effect: () => this.boostAllStats(2) }),
+                () => ({ text: "🧬 全属性 +20", effect: () => this.boostAllStats(20) }),
                 () => ({ text: "💰 金币 +200", effect: () => this.addGold(200) }),
             ],
 
@@ -466,7 +466,7 @@ export class EventScene extends Phaser.Scene {
 
     /** 💪 所有属性提升 */
     boostAllStats(amount) {
-        const stats = ['maxHp', 'attack', 'maxMp', 'armor'];
+        const stats = ['maxHp', 'attack', 'maxMp', 'armor','speed'];
         let data = this.registry.get('playerData');
         if (data) {
             stats.forEach(stat => {

@@ -92,12 +92,14 @@ export class HealSkill extends Skill {
         // this.type = "onTurnStart"; // 触发时机：每回合开始
         this.manaCost = 3+this.level;
         this.amount1 = 20+5*this.level;
+        this.healAmount = 20+5*this.level;
         this.description = this.formatDescription();
     }
 
     updateValues() {
         this.manaCost = 3+this.level;
         this.amount1 = 20+5*this.level;
+        this.healAmount = 20+5*this.level;
     }
 
     /** 技能生效 */
@@ -562,7 +564,7 @@ export class BarrierSkill extends Skill {
 
 export class IceArmorSkill extends Skill {
     constructor() {
-        super("冰甲术", "onFatalDamage", `濒死时消耗所有法力转换成护盾并免死，转化率${amount1}%`);
+        super("冰甲术", "onFatalDamage", `濒死时消耗所有法力转换成护盾并免死，转化率{amount1}%`);
         this.amount1 = (5 + (this.level - 1))*100;
         this.used = false;
         this.description = this.formatDescription();

@@ -7,6 +7,7 @@ import { UISystem } from '../ui/UISystem.js';
 export class GameScene extends Phaser.Scene {
     constructor() {
         super({ key: 'GameScene' });
+        this._resizeHandler = () => this.resizeGame(); 
     }
 
     create(data) {
@@ -26,7 +27,7 @@ export class GameScene extends Phaser.Scene {
         
 
         // ✅ 响应窗口变化
-        window.addEventListener('resize', () => this.resizeGame(), false);
+        window.addEventListener('resize', this._resizeHandler, false);
         this.resizeGame(); // 初始化时调用一次
 
         // 创建角色

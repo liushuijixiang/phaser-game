@@ -6,6 +6,8 @@ export class BootScene extends Phaser.Scene {
     preload() {
         this.load.image('sky', 'assets/sky.png');
         this.load.image('ground', 'assets/platform.png');
+        this.load.image('ml', 'assets/ml.jpg');  // 文件路径必须正确
+        this.load.image('ytl', 'assets/ytl.jpg');  // 文件路径必须正确
         // this.load.image('button', 'assets/button.png');
         this.load.spritesheet('dude', 'assets/dude.png', { frameWidth: 32, frameHeight: 48 });
     }

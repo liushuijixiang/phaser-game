@@ -41,7 +41,7 @@ export class MenuScene extends Phaser.Scene {
         this.resizeGame(); // 初始化时调用一次
 
         //测试用
-        // this.registry.set('gold', 500);
+        // this.registry.set('gold', 5000);
 
 
         // ✅ 初始化数据

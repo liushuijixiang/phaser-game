@@ -44,37 +44,60 @@ export class Buff {
 export class Skill {
     constructor(name, type, description) {
         this.name = name;
-        this.type = type; // e.g., passive, active, onTurnStart, etc.
-        this.description = description;
+        this.type = type;
+        this.baseDescription = description;  // 保留基本描述
+        this.description = this.formatDescription();  // 初始时设置描述
         this.manaCost = 0;
         this.level = 1;
-        this.canUse = true; //记录技能触发后有没有释放
+        this.canUse = true;
+    }
+
+    // 格式化技能描述，用于将数值动态添加到描述中
+    formatDescription() {
+        return this.baseDescription.replace(/{level}/g, this.level)
+                                   .replace(/{manaCost}/g, this.manaCost)
+                                   .replace(/{amount1}/g, this.amount1 || 0)
+                                   .replace(/{amount2}/g, this.amount2 || 0);
     }
 
     checkCanUse(caster) {
-        if (caster.mp >= this.manaCost){this.canUse = true; }
-        else {this.canUse = false;}
+        if (caster.mp >= this.manaCost) {
+            this.canUse = true;
+        } else {
+            this.canUse = false;
+        }
     }
 
     upgrade() {
         this.level++;
+        this.updateValues(); // 更新所有数值
+        this.description = this.formatDescription();  // 升级时更新描述
         console.log(`🔼 ${this.name} 升级至 Lv.${this.level}`);
     }
 
-
     activate(caster) {
         // 覆盖实现
+    }
+
+    updateValues() {
+
     }
 }
 
 // 每回合自动回复技能
 export class HealSkill extends Skill {
     constructor() {
-        super("治疗术","onTurnStart","战斗中每回合消耗法力回复生命");
+        super("治疗术","onTurnStart",`战斗中每回合消耗{manaCost}法力回复{amount1}生命`);
         // this.name = "法力恢复";
         // this.type = "onTurnStart"; // 触发时机：每回合开始
-        this.manaCost = 3;
-        this.healAmount = 20;
+        this.manaCost = 3+this.level;
+        this.amount1 = 20+5*this.level;
+        this.description = this.formatDescription();
+    }
+
+    updateValues() {
+        this.manaCost = 3+this.level;
+        this.amount1 = 20+5*this.level;
     }
 
     /** 技能生效 */
@@ -103,7 +126,13 @@ export class HealSkill extends Skill {
 // 回春技能
 export class BattleHealSkill extends Skill {
     constructor() {
-        super("包扎", "onBattleEnd", "战斗后回复7.5%最大生命");
+        super("包扎", "onBattleEnd",`战斗后回复{amount1}%最大生命`);
+        this.amount1 = 0.075 * this.level*100;
+        this.description = this.formatDescription();
+    }
+
+    updateValues() {
+        this.amount1 = 0.075 * this.level*100;
     }
 
     canUse() {
@@ -126,7 +155,12 @@ export class BattleHealSkill extends Skill {
 // 法力恢复技能
 export class ManaRegenSkill extends Skill {
     constructor() {
-        super("冥想", "onBattleEnd", "战斗后回复7.5%最大法力");
+        super("冥想", "onBattleEnd", `战斗后回复{amount1}%最大法力`);
+        this.amount1 = 0.075 * this.level*100;
+        this.description = this.formatDescription();
+    }
+    updateValues() {
+        this.amount1 = 0.075 * this.level*100;
     }
 
     activate(caster) {
@@ -143,7 +177,12 @@ export class ManaRegenSkill extends Skill {
 // 战地医疗（升级版回春）
 export class BattlefieldHealSkill extends Skill {
     constructor() {
-        super("战地医疗", "onTurnStart", "每回合回复5%最大生命值");
+        super("战地医疗", "onTurnStart", `每回合回复{amount1}%最大生命值`);
+        this.amount1 = 0.05 * this.level*100;
+        this.description = this.formatDescription();
+    }
+    updateValues() {
+        this.amount1 = 0.05 * this.level*100;
     }
 
     activate(caster) {
@@ -161,7 +200,12 @@ export class BattlefieldHealSkill extends Skill {
 // 法力潮汐（升级版回蓝）
 export class ManaTideSkill extends Skill {
     constructor() {
-        super("法力潮汐", "onTurnStart", "每回合回复5%最大法力值");
+        super("法力潮汐", "onTurnStart", `每回合回复{amount1}%最大法力值`);
+        this.amount1 = 0.05 * this.level*100;
+        this.description = this.formatDescription();
+    }
+    updateValues() {
+        this.amount1 = 0.05 * this.level*100;
     }
 
     activate(caster) {
@@ -178,7 +222,12 @@ export class ManaTideSkill extends Skill {
 // 血性狂乱：血量越低，攻击越高
 export class BerserkerRageSkill extends Skill {
     constructor() {
-        super("血性狂乱", "onTurnStart", "生命越低伤害越高");
+        super("血性狂乱", "onTurnStart", `生命越低伤害越高，上限{amount1}%`);
+        this.amount1 = (1+0.1*this.level)*100;
+        this.description = this.formatDescription();
+    }
+    updateValues() {
+        this.amount1 = (1+0.1*this.level)*100;
     }
 
     activate(caster) {
@@ -204,8 +253,13 @@ export class BerserkerRageSkill extends Skill {
 // 越战越勇
 export class MomentumSkill extends Skill {
     constructor() {
-        super("越战越勇", "onTurnStart", "每回合+攻击力");
+        super("越战越勇", "onTurnStart", `每回合+{amount1}攻击力`);
+        this.amount1 = this.level*3;
         this.bonusAttack = 0;
+        this.description = this.formatDescription();
+    }
+    updateValues() {
+        this.amount1 = this.level*3;
     }
 
     activate(caster) {
@@ -226,7 +280,8 @@ export class MomentumSkill extends Skill {
 // 抢攻：首次攻击必定暴击
 export class FirstStrikeSkill extends Skill {
     constructor() {
-        super("抢攻", "onTurnStart", "第一次攻击必定暴击");
+        super("抢攻", "onTurnStart", `若回合开始时攻击次数小于{level}次，此回合内攻击必定暴击`);
+        this.description = this.formatDescription();
     }
 
     activate(caster) {
@@ -246,11 +301,18 @@ export class FirstStrikeSkill extends Skill {
 // 斩杀：低血敌人直接击杀
 export class ExecuteSkill extends Skill {
     constructor() {
-        super("斩杀", "onAttack", "敌人血量较低时有概率直接击杀");
+        super("斩杀", "onAttack", `敌人血量较低时有概率直接击杀，斩杀下限{amount1}%，上限{amount2}%`);
+        this.amount1 = 1+this.level;
+        this.amount2 = 8+2*this.level;
+        this.description = this.formatDescription();
+    }
+    updateValues() {
+        this.amount1 = 1+this.level;
+        this.amount2 = 8+2*this.level;
     }
 
     activate(caster, target) {
-        if (target.hp / target.maxHp <= 0.01*Phaser.Math.Between(1,10+this.level)) {
+        if (target.hp / target.maxHp <= 0.01*Phaser.Math.Between(1+this.level,8+2*this.level)) {
             console.log(`\u2620\ufe0f ${caster.name} 触发斩杀！`);
             BattleLog.write(`   \u2620\ufe0f ${caster.name} 触发斩杀！`);
             BattleStats.addSkillUsage(caster, this.name, {
@@ -267,7 +329,12 @@ export class ExecuteSkill extends Skill {
 
 export class ArcaneBarrierSkill extends Skill {
     constructor() {
-        super("奥术壁垒", "onBattleStart", "战斗开始时消耗10%最大法力值，获得等量*10的临时护盾");
+        super("奥术壁垒", "onBattleStart", `战斗开始时消耗10%最大法力值，获得消耗量*{amount1}的临时护盾`);
+        this.amount1 = 10 + (this.level - 1) * 2;
+        this.description = this.formatDescription();
+    }
+    updateValues() {
+        this.amount1 = 10 + (this.level - 1) * 2;
     }
 
     activate(caster) {
@@ -275,11 +342,11 @@ export class ArcaneBarrierSkill extends Skill {
         this.checkCanUse(caster);
         if (this.canUse) {
             caster.mp -= this.manaCost;
-            caster.shield += this.manaCost * (10 + (this.level - 1) * 1);
-            console.log(`🛡️ ${caster.name} 激活奥术壁垒，消耗 ${this.manaCost} 法力，获得 ${this.manaCost * 10} 护盾`);
-            BattleLog.write(`   🛡️ ${caster.name} 激活奥术壁垒，消耗 ${this.manaCost} 法力，获得 ${this.manaCost * 10} 护盾`);
+            caster.shield += this.manaCost * (10 + (this.level - 1) * 2);
+            console.log(`🛡️ ${caster.name} 激活奥术壁垒，消耗 ${this.manaCost} 法力，获得 ${this.manaCost * (10 + (this.level - 1) * 2)} 护盾`);
+            BattleLog.write(`   🛡️ ${caster.name} 激活奥术壁垒，消耗 ${this.manaCost} 法力，获得 ${this.manaCost * (10 + (this.level - 1) * 2)} 护盾`);
             BattleStats.addSkillUsage(caster, this.name, {
-                "获得护盾": this.manaCost * (10 + (this.level - 1) * 1),
+                "获得护盾": this.manaCost * (10 + (this.level - 1) * 2),
                 "耗蓝": this.manaCost
             });
         }
@@ -288,7 +355,12 @@ export class ArcaneBarrierSkill extends Skill {
 
 export class SpeedSkill extends Skill {
     constructor() {
-        super("疾驰", "onBattleStart", "战斗开始时，获得100点临时速度，持续到第一回合结束");
+        super("疾驰", "onBattleStart", `战斗开始时，获得{amount1}点临时速度，持续到第一回合结束`);
+        this.amount1 = 100 + 50*(this.level - 1);
+        this.description = this.formatDescription();
+    }
+    updateValues() {
+        this.amount1 = 100 + 50*(this.level - 1);
     }
 
     activate(caster) {
@@ -303,19 +375,20 @@ export class SpeedSkill extends Skill {
 
 export class AssassinSkill extends Skill {
     constructor() {
-        super("舍身一击", "onBattleStart", "战斗开始时，将所有生命转化为护盾，本回合攻击拥有吸血");
+        super("舍身一击", "onBattleStart", `战斗开始时，将所有生命转化为{level}倍护盾，本回合攻击拥有全额吸血`);
+        this.description = this.formatDescription();
     }
 
     activate(caster) {
-            caster.lifesteal += 100*this.level;
-            console.log(`✈️ ${caster.name} 激活舍身一击，获得 ${caster.hp} 护盾，本回合攻击拥有吸血`);
-            BattleLog.write(`   ✈️ ${caster.name} 激活舍身一击，获得 ${caster.hp} 护盾，本回合攻击拥有吸血`);
+            caster.lifesteal += 100;
+            console.log(`✈️ ${caster.name} 激活舍身一击，获得 ${caster.hp*this.level} 护盾，本回合攻击拥有吸血`);
+            BattleLog.write(`   ✈️ ${caster.name} 激活舍身一击，获得 ${caster.hp*this.level} 护盾，本回合攻击拥有吸血`);
             BattleStats.addSkillUsage(caster, this.name, {
-                "获得护盾": caster.hp,
+                "获得护盾": caster.hp*this.level,
                 "获得吸血": 100*this.level
             });
 
-            caster.shield += caster.hp;
+            caster.shield += caster.hp*this.level;
             caster.hp = 1;
     }
 }
@@ -323,7 +396,8 @@ export class AssassinSkill extends Skill {
 
 export class ArcaneBarrierEchoSkill extends Skill {
     constructor() {
-        super("次生护盾", "onSpellCast", "消耗最大法力值时，获得等量的临时护盾");
+        super("次生护盾", "onSpellCast", `消耗最大法力值时，获得消耗量*{level}的临时护盾`);
+        this.description = this.formatDescription();
     }
 
     activate(caster,manaCost) {
@@ -338,7 +412,12 @@ export class ArcaneBarrierEchoSkill extends Skill {
 
 export class MagicMissileSkill extends Skill {
     constructor() {
-        super("魔法飞弹", "onTurnStart", "每回合消耗10%最大法力造成2倍伤害");
+        super("魔法飞弹", "onTurnStart", `每回合消耗10%最大法力造成消耗量*{amount1}倍伤害`);
+        this.amount1 = (2 + (this.level - 1) * 1);
+        this.description = this.formatDescription();
+    }
+    updateValues() {
+        this.amount1 = (2 + (this.level - 1) * 1);
     }
 
     activate(caster, target) {
@@ -362,7 +441,12 @@ export class MagicMissileSkill extends Skill {
 
 export class ArcaneWisdomSkill extends Skill {
     constructor() {
-        super("奥术智慧", "onSpellCast", "使用法力值后回复5点法力值");
+        super("奥术智慧", "onSpellCast", `使用法力后回复{amount1}点法力值`);
+        this.amount1 = 5 + (this.level - 1) * 2;
+        this.description = this.formatDescription();
+    }
+    updateValues() {
+        this.amount1 = 5 + (this.level - 1) * 2;
     }
 
     activate(caster) {
@@ -379,7 +463,12 @@ export class ArcaneWisdomSkill extends Skill {
 
 export class ManaBurnSkill extends Skill {
     constructor() {
-        super("法力燃烧", "onTurnStart", "每回合消耗与攻击力相等的法力值，获得翻倍的临时攻击力");
+        super("法力燃烧", "onTurnStart", `每回合消耗与攻击力相等的法力值，获得{amount1}倍的临时攻击力`);
+        this.amount1 = 1+(0.1*this.level+1);
+        this.description = this.formatDescription();
+    }
+    updateValues() {
+        this.amount1 = 1+(0.1*this.level+1);
     }
 
     activate(caster) {
@@ -401,7 +490,12 @@ export class ManaBurnSkill extends Skill {
 
 export class ArcaneEchoSkill extends Skill {
     constructor() {
-        super("灵能回响", "onSpellCast", "施放法术后攻击力 +2，可叠加");
+        super("灵能回响", "onSpellCast", `施放法术后攻击力+{amount1} ，可叠加`);
+        this.amount1 = 1 + this.level;
+        this.description = this.formatDescription();
+    }
+    updateValues() {
+        this.amount1 = 1 + this.level;
     }
 
     activate(caster) {
@@ -417,7 +511,14 @@ export class ArcaneEchoSkill extends Skill {
 
 export class ArcaneReversalSkill extends Skill {
     constructor() {
-        super("奥术反制", "onDamageTaken", "受到伤害时消耗蓝量减少50%伤害");
+        super("奥术反制", "onDamageTaken", `受到伤害时消耗等同于伤害量{amount1}%的法力以减少{amount2}%伤害`);
+        this.amount1 = 50/this.level;
+        this.amount2 = 50+this.level;
+        this.description = this.formatDescription();
+    }
+    updateValues() {
+        this.amount1 = 50/this.level;
+        this.amount2 = 50+this.level;
     }
 
     activate(caster, damage) {
@@ -425,7 +526,7 @@ export class ArcaneReversalSkill extends Skill {
         this.checkCanUse(caster);
         if (this.canUse) {
             caster.mp -= this.manaCost;
-            const reduced = Math.floor(damage * 0.5);
+            const reduced = Math.floor(damage * 0.5 + 0.01*this.level);
             console.log(`🛡️ 奥术反制触发，消耗 ${this.manaCost} 法力，伤害从 ${damage} 降至 ${reduced}`);
             BattleLog.write(`   🛡️ 奥术反制触发，消耗 ${this.manaCost} 法力，伤害从 ${damage} 降至 ${reduced}`);
             BattleStats.addSkillUsage(caster, this.name, {
@@ -440,7 +541,12 @@ export class ArcaneReversalSkill extends Skill {
 
 export class BarrierSkill extends Skill {
     constructor() {
-        super("自适应护甲", "onDamageTaken", "受到伤害时，获得持续到战斗结束的临时护甲");
+        super("自适应护甲", "onDamageTaken", `受到伤害时，获得持续到战斗结束的{amount1}倍临时护甲`);
+        this.amount1 = 0.1*this.level;
+        this.description = this.formatDescription();
+    }
+    updateValues() {
+        this.amount1 = 0.1*this.level;
     }
 
     activate(caster, damage) {
@@ -456,9 +562,15 @@ export class BarrierSkill extends Skill {
 
 export class IceArmorSkill extends Skill {
     constructor() {
-        super("冰甲术", "onFatalDamage", "濒死时消耗所有蓝转换成护盾并免死");
+        super("冰甲术", "onFatalDamage", `濒死时消耗所有法力转换成护盾并免死，转化率${amount1}%`);
+        this.amount1 = (5 + (this.level - 1))*100;
         this.used = false;
+        this.description = this.formatDescription();
     }
+    updateValues() {
+        this.amount1 = (5 + (this.level - 1))*100;
+    }
+
 
     activate(caster) {
         if (!this.used && caster.mp > 0) {
@@ -502,11 +614,16 @@ export class IceArmorSkill extends Skill {
 
 export class ArcaneSaturationSkill extends Skill {
     constructor() {
-        super("法力流系带", "onSpellCast", "施法后临时最大法力值 +2");
+        super("法力流系带", "onSpellCast", `施法后临时最大法力值 +{amount1}`);
+        this.amount1 = 5 + 2*this.level;
+        this.description = this.formatDescription();
+    }
+    updateValues() {
+        this.amount1 = 5 + 2*this.level;
     }
 
     activate(caster) {
-        const gain = 1 + this.level;
+        const gain = 5 + 2*this.level;
         caster.tempMaxMp += gain;
         caster.mp += gain;
         console.log(`🌊 法力流系带触发：最大法力值 +${gain}`);
@@ -520,7 +637,12 @@ export class ArcaneSaturationSkill extends Skill {
 
 export class ManaAddictionSkill extends Skill {
     constructor() {
-        super("魔瘾渴求", "onNotEnoughMana", "缺蓝时消耗生命转为蓝和护盾");
+        super("魔瘾渴求", "onNotEnoughMana", `缺蓝时消耗生命转为蓝和护盾，转化率{amount1}%`);
+        this.amount1 = (5 + this.level)*100;
+        this.description = this.formatDescription();
+    }
+    updateValues() {
+        this.amount1 = (5 + this.level)*100;
     }
 
     activate(caster) {

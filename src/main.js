@@ -4,6 +4,7 @@ import { MenuScene } from './scenes/MenuScene.js';
 import { GameScene } from './scenes/GameScene.js';
 import { EventScene } from './scenes/EventScene.js';
 import { LevelSelectScene } from './scenes/LevelSelectScene.js';
+import { PlayerDetailScene } from './scenes/PlayerDetailScene.js';
 
 // Phaser 3 配置
 var config = {
@@ -17,7 +18,7 @@ var config = {
             debug: false
         }
     },
-    scene: [BootScene, MenuScene, EventScene, LevelSelectScene, GameScene] // 多个场景
+    scene: [BootScene, MenuScene, EventScene, LevelSelectScene, GameScene, PlayerDetailScene] // 多个场景
 };
 
 // 初始化游戏

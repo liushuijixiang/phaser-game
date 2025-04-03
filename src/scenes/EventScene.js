@@ -4,6 +4,7 @@ import { BattleLog } from '../battle/BattleLog.js';
 export class EventScene extends Phaser.Scene {
     constructor() {
         super({ key: 'EventScene' });
+        this._resizeHandler = () => this.resizeGame(); 
     }
 
     create(data) {
@@ -13,9 +14,24 @@ export class EventScene extends Phaser.Scene {
         this.from = data.from || 'event';
 
         this.gold = this.registry.get('gold') || 0;
-        
 
-        window.addEventListener('resize', () => this.resizeGame(), false);
+        this.statusText = this.add.text(100*window.innerWidth/600-70, 180*window.innerHeight/800, '', {
+            fontSize: '24px',
+            fill: '#fff'
+        }).setScrollFactor(0);
+
+        this.updateStatusBar = () => {
+            const player = this.registry.get('playerData');
+            this.statusText.setText(`
+❤️ ${player.hp}/${player.maxHp} 
+🔵 ${player.mp}/${player.maxMp}`);
+        };
+        this.avatar = this.add.image(100*window.innerWidth/600, 100*window.innerHeight/800, 'ml').setInteractive();
+        this.avatar.setScale(0.2);
+        this.avatar.on('pointerdown', () => this.showPlayerDetail());
+        this.updateStatusBar();
+
+        window.addEventListener('resize', this._resizeHandler, false);
 
         this.options = [];
 
@@ -119,7 +135,7 @@ export class EventScene extends Phaser.Scene {
                     player.hp = player.maxHp;
                     player.mp = player.maxMp;
                     this.registry.set('playerData', player);} }),
-                () => ({ text: "⚔️ 遭遇伏击战！", effect: () => this.scene.start('GameScene', { enemyType: "ambush" }) }),
+                () => ({ text: "⚔️ 遭遇伏击战！", effect: () => {this.scene.start('GameScene', { enemyType: "ambush" });this.scene.stop();}  }),
                 // () => ({ text: "💎 获得稀有饰品（占位）", effect: () => this.log("获得：冰魄项链") }),
                 () => {
                     const [skill] = this.getRandomSkill(1, { rarity: 'common' });
@@ -156,8 +172,8 @@ export class EventScene extends Phaser.Scene {
                         // 若是正常事件奖励，返回 LevelSelectScene
                         if (opt.text.indexOf("遭遇") === -1) {
                             this.time.delayedCall(500, () => {
-                                if (from === 'victory_boss'){this.scene.start('MenuScene');}
-                                else{this.scene.start('LevelSelectScene');}
+                                if (from === 'victory_boss'){this.scene.start('MenuScene');this.scene.stop(); }
+                                else{this.scene.start('LevelSelectScene');this.scene.stop(); }
                             });
                         }
                     });
@@ -188,6 +204,17 @@ export class EventScene extends Phaser.Scene {
 
         
     }
+
+    showPlayerDetail() {
+        const playerData = this.registry.get('playerData');
+        this.scene.pause(); // 暂停当前场景
+        this.scene.launch('PlayerDetailScene', {
+            playerData: playerData,
+            returnScene: this.scene.key // 当前场景的 key
+        });
+    }
+
+
 
     shutdown() {
         // 离开场景时移除监听
@@ -239,6 +266,7 @@ export class EventScene extends Phaser.Scene {
             .setInteractive()
             .on('pointerdown', () => {
                 this.scene.start('LevelSelectScene');
+                this.scene.stop(); 
             });
     }
 
@@ -335,7 +363,7 @@ export class EventScene extends Phaser.Scene {
                 name: '速度 +5',
                 type: 'stat',
                 price: 40+this.floor*5,
-                weight: 10,
+                weight: 3,
                 effect: () => {
                     this.modifyPlayer('speed', 5);
                 }
@@ -343,8 +371,8 @@ export class EventScene extends Phaser.Scene {
             {
                 name: '暴击 +2',
                 type: 'stat',
-                price: 65+this.floor*10,
-                weight: 10,
+                price: 15+this.floor*10,
+                weight: 1,
                 effect: () => {
                     this.modifyPlayer('critChance', 2);
                 }
@@ -352,8 +380,8 @@ export class EventScene extends Phaser.Scene {
             {
                 name: '暴伤 +2',
                 type: 'stat',
-                price: 65+this.floor*10,
-                weight: 10,
+                price: 15+this.floor*10,
+                weight: 1,
                 effect: () => {
                     this.modifyPlayer('critDamage', 2);
                 }
@@ -362,7 +390,7 @@ export class EventScene extends Phaser.Scene {
                 name: `⭐ 技能：${skill.name}`,
                 type: 'skill',
                 price: 40+this.floor*5,
-                weight: 25,
+                weight: 35,
                 effect: (scene) => {
                     
                     this.addSkill(skill);
@@ -515,6 +543,15 @@ export class EventScene extends Phaser.Scene {
         // 更新标题位置
         if (this.text) {
             this.text.setPosition(width / 2, 80 * height / 600);
+        }
+
+        // 更新头像位置
+        if (this.avatar) {
+            this.avatar.setPosition(100*width/600, 100*height/800);
+        }
+
+        if( this.statusText ) {
+            this.statusText.setPosition (100*window.innerWidth/600-70, 180*window.innerHeight/800);
         }
 
         // 更新金币显示位置
@@ -678,8 +715,8 @@ export class EventScene extends Phaser.Scene {
                         // 若是正常事件奖励，返回 LevelSelectScene
                         if (opt.text.indexOf("遭遇") === -1) {
                             this.time.delayedCall(500, () => {
-                                if (this.from === 'victory_boss'){this.scene.start('MenuScene');}
-                                else{this.scene.start('LevelSelectScene');}
+                                if (this.from === 'victory_boss'){this.scene.start('MenuScene');this.scene.stop(); }
+                                else{this.scene.start('LevelSelectScene');this.scene.stop(); }
                             });
                         }
                     });

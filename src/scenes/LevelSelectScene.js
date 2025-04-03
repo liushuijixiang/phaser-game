@@ -8,6 +8,8 @@ export class LevelSelectScene extends Phaser.Scene {
         this.mapData = [];
         this.currentNode = 0;
         this.availableNodes = new Set();
+
+        this._resizeHandler = () => this.resizeGame(); 
     }
 
 
@@ -16,7 +18,7 @@ export class LevelSelectScene extends Phaser.Scene {
     create() {
         this.add.text(400*window.innerWidth/800, 50*window.innerHeight/600, '选择你的路径', { fontSize: '28px', fill: '#fff' }).setOrigin(0.5);
 
-        window.addEventListener('resize', () => this.resizeGame(), false);
+        window.addEventListener('resize', this._resizeHandler, false);
 
         // 创建地图容器
         this.mapContainer = this.add.container(0, 0);
@@ -66,6 +68,8 @@ export class LevelSelectScene extends Phaser.Scene {
         this.createScrollBar();
 
         this.centerOnCurrentNode(); // 👈 添加这一行
+
+        this.events.on('shutdown', this.shutdown, this);
     }
 
     shutdown() {
@@ -408,17 +412,24 @@ export class LevelSelectScene extends Phaser.Scene {
         this.updateAvailableNodes();
         this.highlightNodes();
 
+        // 手动移除 resize 事件监听器
+        window.removeEventListener('resize', this._resizeHandler);
+        
+
         if (node.type === "fight" || node.type === "elite" || node.type === "boss") {
             this.generateMonster(node.type);
             this.scene.start('GameScene', { enemyType: node.type });
+            this.scene.stop(); 
             if(node.type === "boss") {
                 this.registry.set("returnNode", undefined);
                 this.registry.set("floor", this.floor+1);
             }
         } else if (node.type === "event") {
             this.scene.start('EventScene', { from: 'event' });
+            this.scene.stop(); 
         } else if (node.type === "shop") {
             this.scene.start('EventScene', { from: 'shop' });
+            this.scene.stop(); 
         }
 
     }
@@ -494,7 +505,7 @@ export class LevelSelectScene extends Phaser.Scene {
         this.scale.resize(width, height);
 
         // 2. 设置摄像机边界，适配新窗口大小
-        if(this.cameras){
+        if(this.cameras.main && this.mapData){
             this.cameras.main.setBounds(0, 0, width, this.mapData.length * 120 * height / 600);
         }
         

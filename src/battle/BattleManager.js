@@ -441,6 +441,7 @@ export class BattleManager {
                 ambush: 'victory_normal'
             }[this.enemyType] || 'victory_normal';
             this.logBattle();
+            this.scene.scene.stop();
             this.scene.scene.start('EventScene', { from: fromType });
             // this.scene.scene.start('LevelSelectScene'); // 切换到游戏场景
 

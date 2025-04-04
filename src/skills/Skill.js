@@ -129,12 +129,12 @@ export class HealSkill extends Skill {
 export class BattleHealSkill extends Skill {
     constructor() {
         super("包扎", "onBattleEnd",`战斗后回复{amount1}%最大生命`);
-        this.amount1 = 0.075 * this.level*100;
+        this.amount1 = (0.075 * this.level*100).toFixed(1);
         this.description = this.formatDescription();
     }
 
     updateValues() {
-        this.amount1 = 0.075 * this.level*100;
+        this.amount1 = (0.075 * this.level*100).toFixed(1);
     }
 
     canUse() {
@@ -158,11 +158,11 @@ export class BattleHealSkill extends Skill {
 export class ManaRegenSkill extends Skill {
     constructor() {
         super("冥想", "onBattleEnd", `战斗后回复{amount1}%最大法力`);
-        this.amount1 = 0.075 * this.level*100;
+        this.amount1 = (0.075 * this.level*100).toFixed(1);
         this.description = this.formatDescription();
     }
     updateValues() {
-        this.amount1 = 0.075 * this.level*100;
+        this.amount1 = (0.075 * this.level*100).toFixed(1);
     }
 
     activate(caster) {
@@ -179,12 +179,12 @@ export class ManaRegenSkill extends Skill {
 // 战地医疗（升级版回春）
 export class BattlefieldHealSkill extends Skill {
     constructor() {
-        super("战地医疗", "onTurnStart", `每回合回复{amount1}%最大生命值`);
-        this.amount1 = 0.01 * this.level*100;
+        super("战地医疗", "onTurnStart", `每回合回复{level}%最大生命值`);
+        this.amount1 = level;
         this.description = this.formatDescription();
     }
     updateValues() {
-        this.amount1 = 0.01 * this.level*100;
+        // this.amount1 = 0.01 * this.level*100;
     }
 
     activate(caster) {
@@ -202,12 +202,12 @@ export class BattlefieldHealSkill extends Skill {
 // 法力潮汐（升级版回蓝）
 export class ManaTideSkill extends Skill {
     constructor() {
-        super("法力潮汐", "onTurnStart", `每回合回复{amount1}%最大法力值`);
-        this.amount1 = 0.01 * this.level*100;
+        super("法力潮汐", "onTurnStart", `每回合回复{level}%最大法力值`);
+        // this.amount1 = 0.01 * this.level*100;
         this.description = this.formatDescription();
     }
     updateValues() {
-        this.amount1 = 0.01 * this.level*100;
+        // this.amount1 = 0.01 * this.level*100;
     }
 
     activate(caster) {
@@ -225,11 +225,11 @@ export class ManaTideSkill extends Skill {
 export class BerserkerRageSkill extends Skill {
     constructor() {
         super("血性狂乱", "onTurnStart", `生命越低伤害越高，上限{amount1}%`);
-        this.amount1 = (1+0.1*this.level)*100;
+        this.amount1 = (100+10*this.level);
         this.description = this.formatDescription();
     }
     updateValues() {
-        this.amount1 = (1+0.1*this.level)*100;
+        this.amount1 = (100+10*this.level);
     }
 
     activate(caster) {
@@ -466,11 +466,11 @@ export class ArcaneWisdomSkill extends Skill {
 export class ManaBurnSkill extends Skill {
     constructor() {
         super("法力燃烧", "onTurnStart", `每回合消耗与攻击力相等的法力值，获得{amount1}倍的临时攻击力`);
-        this.amount1 = 1+(0.1*this.level+1);
+        this.amount1 = (1+(0.1*this.level+1)).toFixed(1);
         this.description = this.formatDescription();
     }
     updateValues() {
-        this.amount1 = 1+(0.1*this.level+1);
+        this.amount1 = (1+(0.1*this.level+1)).toFixed(1);
     }
 
     activate(caster) {
@@ -519,7 +519,7 @@ export class ArcaneReversalSkill extends Skill {
         this.description = this.formatDescription();
     }
     updateValues() {
-        this.amount1 = 50/this.level;
+        this.amount1 = 50;
         this.amount2 = 50+this.level;
     }
 
@@ -544,11 +544,11 @@ export class ArcaneReversalSkill extends Skill {
 export class BarrierSkill extends Skill {
     constructor() {
         super("自适应护甲", "onDamageTaken", `受到伤害时，获得持续到战斗结束的{amount1}倍临时护甲`);
-        this.amount1 = 0.1*this.level;
+        this.amount1 = (0.1*this.level).toFixed(1);
         this.description = this.formatDescription();
     }
     updateValues() {
-        this.amount1 = 0.1*this.level;
+        this.amount1 = (0.1*this.level).toFixed(1);
     }
 
     activate(caster, damage) {

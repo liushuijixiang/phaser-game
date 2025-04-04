@@ -38,25 +38,20 @@ export class PlayerDetailScene extends Phaser.Scene {
             `⚔️ 爆伤：${player.critDamage}`,
             '',
             '✨ 技能：',
-            ...skills.map(s => ` - ${s.name}（Lv.${s.level}）\n${s.description}`)
-        ].join('\n');
+            ...skills.map(s => ` - ${s.name}（Lv.${s.level}）\n${s.description}`),
+            ''
+        ];
 
         // 处理饰品显示
-        if (player.currentItem) {
-            // 如果有饰品，显示饰品名称、描述和附带效果
-            content.push(`✨ 当前饰品: ${player.currentItem.name}`);
-            content.push(`   描述: ${player.currentItem.description}`);
-            if (player.currentItem.effect) {
-                content.push(`   饰品效果: ${this.getItemEffectDescription(player)}`);
-            }
-        } else {
-            // 没有饰品时的提示
-            content.push(`✨ 当前饰品: 无`);
-        }
+        const itemDisplay = player.items && player.items.length > 0
+            ? player.items.map(it => it.showDetails()).join('\n')
+            : '无';
+
+        content.push(`💍 饰品：${itemDisplay}`);
 
         // ✅ 保存组件引用
         this.bg = this.add.rectangle(0, 0, 0, 0, 0x000044, 0.8);
-        this.text = this.add.text(0, 0, content, {
+        this.text = this.add.text(0, 0, content.join('\n'), {
             fontSize: '16px',
             fill: '#fff',
             wordWrap: { width: this.scale.width * 0.75 }

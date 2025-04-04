@@ -184,6 +184,23 @@ export class Player {
         }
     }
 
+    equipItem(newItem) {
+        if (!this.items) this.items = [];
+        const maxSlots = 1 + (this.extraItemSlots || 0);
+
+        if (this.items.length >= maxSlots) {
+            const shouldReplace = confirm(`你已持有饰品，是否替换【${this.items[0].name}】？`);
+            if (!shouldReplace) return;
+            
+            // 移除旧饰品效果
+            this.items[0].removeFromPlayer(this);
+            this.items.shift(); // 删除第一个
+        }
+
+        newItem.applyToPlayer(this);
+        this.items.push(newItem);
+    }
+
     updateUIPosition() {
         // 重新计算 UI 尺寸
         this.uiX = 20 * window.innerWidth / 800;

@@ -159,9 +159,9 @@ export class LevelSelectScene extends Phaser.Scene {
     generateRandomMap() {
         // const nodeTypes = ["fight", "event", "elite", "shop"];
         const weightedTypes = [
-            "fight", "fight", "fight", // 权重大
+            "fight", "fight", "fight","fight", "fight", "fight", // 权重大
             "event", "event",
-            "elite",
+            "elite","elite","elite",
             "shop" // 权重小
         ];
         this.mapData = [];

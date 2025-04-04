@@ -1,5 +1,6 @@
 import { SkillRegistry } from '../skills/SkillRegistry.js';
 import { BattleLog } from '../battle/BattleLog.js';
+import { ItemPool } from '../skills/Item.js';
 
 export class EventScene extends Phaser.Scene {
     constructor() {
@@ -126,9 +127,39 @@ export class EventScene extends Phaser.Scene {
             ],
 
             victory_boss: [
-                () => ({ text: "🦴 学会传说技能：神灭一击", effect: () => this.log("获得技能：神灭一击！") }),
-                () => ({ text: "💠 传说饰品：龙魂指环", effect: () => this.log("获得饰品：龙魂指环") }),
-                () => ({ text: "🧬 全属性 +20", effect: () => this.boostAllStats(20) }),
+                () => {
+                    const [skill] = this.getRandomSkill(1, { rarity: 'common' });
+                    return {
+                        text: `⭐ 学会并升级两次技能：${skill.name}`,
+                        effect: () => {
+                            this.addSkill(skill);
+                            this.addSkill(skill);
+                            this.addSkill(skill);
+                            this.log(`学会并升级两次技能：${skill.name}`);
+                        }
+                    };
+                },
+                () => {
+                    const item = this.getRandomItem();
+                    return {
+                        text: `💠 获得饰品：${item.name}`,
+                        effect: (callback) => {
+                            this.addItemToPlayer(item, callback); // <- 传入回调
+                            this.log(`获得饰品：${item.name}`);
+                        }
+                    };
+                },
+                () => {
+                    const item = this.getRandomItem();
+                    return {
+                        text: `💠 获得饰品：${item.name}`,
+                        effect: (callback) => {
+                            this.addItemToPlayer(item, callback); // <- 传入回调
+                            this.log(`获得饰品：${item.name}`);
+                        }
+                    };
+                },
+                () => ({ text: "🧬 全属性 +10", effect: () => this.boostAllStats(10) }),
                 () => ({ text: "💰 金币 +200", effect: () => this.addGold(200) }),
             ],
 
@@ -170,14 +201,29 @@ export class EventScene extends Phaser.Scene {
                     .setOrigin(0.5)
                     .setInteractive()
                     .on('pointerdown', () => {
-                        opt.effect();
+                        
+
+                        const goToNextScene = () => {
+                            if (from === 'victory_boss') {
+                                this.scene.start('MenuScene');
+                            } else {
+                                this.scene.start('LevelSelectScene');
+                            }
+                            this.scene.stop();
+                        };
 
                         // 若是正常事件奖励，返回 LevelSelectScene
                         if (opt.text.indexOf("遭遇") === -1) {
-                            this.time.delayedCall(500, () => {
-                                if (from === 'victory_boss'){this.scene.start('MenuScene');this.scene.stop(); }
-                                else{this.scene.start('LevelSelectScene');this.scene.stop(); }
-                            });
+                            // 判断是否是饰品
+                            if (opt.text.includes("获得饰品")) {
+                                // 延迟执行跳转，在饰品替换弹窗中调用 goToNextScene
+                                opt.effect(goToNextScene);
+                            } else {
+                                opt.effect();
+                                goToNextScene();
+                            }
+                        } else {
+                            opt.effect();
                         }
                     });
             });
@@ -461,17 +507,255 @@ export class EventScene extends Phaser.Scene {
     }
 
 
+    getRandomItem() {
+        const player = this.registry.get("playerData");
+        const currentBackpackCount = (player.items || []).filter(i => i.name === "背包").length;
+
+        const filteredPool = ItemPool.filter(item => {
+            if (item.name === "背包" && currentBackpackCount >= 2) {
+                return false; // ❌ 不再允许抽出更多背包
+            }
+            return true; // ✅ 其他饰品允许
+        });
+
+        const weightedPool = [];
+
+        filteredPool.forEach(item => {
+            const weight = item.weight || 1;
+            for (let i = 0; i < weight; i++) {
+                weightedPool.push(item);
+            }
+        });
+
+        const itemInstance = Phaser.Utils.Array.GetRandom(weightedPool);
+        console.log("🎲 抽取的饰品：", itemInstance?.name);
+        return itemInstance;
+    }
+
+
+
+
+
+    // addItemToPlayer(itemInstance, callback) {
+    //     const player = this.registry.get("playerData");
+    //     player.items = player.items || [];
+
+    //     const maxItems = 1 + (player.extraItemSlots || 0);
+
+    //     console.log("🎒 当前饰品数量：", player.items.length);
+    //     console.log("📦 当前最大容量：", maxItems);
+
+    //     if (player.items.length >= maxItems) {
+    //         // 默认替换第一个（你也可以弹出选择替换哪一个）
+    //         const oldItem = player.items[0];
+
+    //         this.showItemReplaceDialog(oldItem, itemInstance,
+    //             () => {
+    //                 if (oldItem?.onRemove) oldItem.onRemove(player);
+    //                 if (itemInstance?.onAcquire) itemInstance.onAcquire(player);
+
+    //                 player.items[0] = itemInstance;
+    //                 this.registry.set("playerData", player);
+
+    //                 this.showToast(`✅ 已替换为新饰品：${itemInstance.name}`);
+
+    //                 // ✅ 检查背包是否被移除后饰品溢出
+    //                 this.enforceItemCapacity(player);
+
+    //                 if (callback) callback();
+    //             },
+    //             () => {
+    //                 this.showToast(`❌ 你保留了原饰品：${oldItem.name}`);
+    //                 if (callback) callback();
+    //             }
+    //         );
+    //     } else {
+    //         player.items.push(itemInstance);
+    //         if (itemInstance?.onAcquire) itemInstance.onAcquire(player);
+
+    //         this.showToast(`🎁 获得饰品：${itemInstance.name}`);
+    //         this.registry.set("playerData", player);
+    //         if (callback) callback();
+    //     }
+    // }
+    addItemToPlayer(itemInstance, callback) {
+        const player = this.registry.get("playerData");
+        player.items = player.items || [];
+        const maxItems = 1 + (player.extraItemSlots || 0);
+
+        console.log("🎒 当前饰品数量：", player.items.length);
+        console.log("📦 当前最大容量：", maxItems);
+
+        if (player.items.length >= maxItems) {
+            // ✅ 可视化替换选择（支持多个饰品）
+            this.showMultiItemReplaceDialog(player.items, itemInstance, (replaceIndex) => {
+                const oldItem = player.items[replaceIndex];
+
+                if (oldItem?.onRemove) oldItem.onRemove(player);
+                if (itemInstance?.onAcquire) itemInstance.onAcquire(player);
+
+                player.items[replaceIndex] = itemInstance;
+
+                // ✅ 检查背包是否被移除后饰品溢出
+                this.enforceItemCapacity(player);
+
+                this.registry.set("playerData", player);
+                this.showToast(`✅ 已替换为新饰品：${itemInstance.name}`);
+                if (callback) callback();
+            }, () => {
+                this.showToast("❌ 保留了原饰品");
+                if (callback) callback();
+            });
+
+        } else {
+            player.items.push(itemInstance);
+            if (itemInstance?.onAcquire) itemInstance.onAcquire(player);
+
+            this.registry.set("playerData", player);
+            this.showToast(`🎁 获得饰品：${itemInstance.name}`);
+            if (callback) callback();
+        }
+    }
+
+
+    enforceItemCapacity(player) {
+        const maxItems = 1 + (player.extraItemSlots || 0);
+        if (player.items.length > maxItems) {
+            const removed = player.items.splice(maxItems); // 多余的饰品被移除
+            removed.forEach(item => {
+                if (item.onRemove) item.onRemove(player);
+            });
+            this.showToast(`⚠️ 你失去了 ${removed.length} 个饰品`);
+        }
+    }
+
+    showMultiItemReplaceDialog(currentItems, newItem, onConfirm, onCancel) {
+        const width = this.scale.width;
+        const height = this.scale.height;
+
+        const bg = this.add.rectangle(width / 2, height / 2, width * 0.9, height * 0.6, 0x000000, 0.8).setOrigin(0.5);
+        const border = this.add.rectangle(width / 2, height / 2, width * 0.9, height * 0.6).setStrokeStyle(2, 0xffffff).setOrigin(0.5);
+        const title = this.add.text(width / 2, height * 0.25, "选择要替换的饰品", {
+            fontSize: "24px",
+            fill: "#ffd700",
+            align: "center"
+        }).setOrigin(0.5);
+
+        const newText = this.add.text(width * 0.75, height * 0.4, `新饰品：\n${newItem.showDetails()}`, {
+            fontSize: "16px",
+            fill: "#0f0",
+            wordWrap: { width: width * 0.3 }
+        }).setOrigin(0.5);
+
+        const textObjs = [];
+
+        currentItems.forEach((item, index) => {
+            const itemText = this.add.text(
+                width * (0.2),
+                height * (0.4 + index * 0.1),
+                `${item.name}\n${item.description}`,
+                {
+                    fontSize: "16px",
+                    fill: "#fff",
+                    backgroundColor: "#333",
+                    padding: 10,
+                    wordWrap: { width: width * 0.25 }
+                }
+            ).setOrigin(0.5).setInteractive();
+
+            itemText.on('pointerdown', () => {
+                destroyAll();
+                onConfirm(index);
+            });
+
+            textObjs.push(itemText);
+        });
+
+        const cancelBtn = this.add.text(width / 2, height * 0.75, "❌ 不替换", {
+            fontSize: "20px",
+            fill: "#fff",
+            backgroundColor: "#444",
+            padding: 10
+        }).setOrigin(0.5).setInteractive();
+
+        cancelBtn.on('pointerdown', () => {
+            destroyAll();
+            if (onCancel) onCancel();
+        });
+
+        const destroyAll = () => {
+            [bg, border, title, cancelBtn, newText, ...textObjs].forEach(obj => obj.destroy());
+        };
+    }
+
+
+
+    // showItemReplaceDialog(oldItem, newItem, onConfirmReplace, onCancel) {
+    //     const width = this.scale.width;
+    //     const height = this.scale.height;
+
+    //     const bg = this.add.rectangle(width / 2, height / 2, width * 0.8, height * 0.5, 0x000000, 0.8).setOrigin(0.5);
+    //     const border = this.add.rectangle(width / 2, height / 2, width * 0.8, height * 0.5).setStrokeStyle(2, 0xffffff).setOrigin(0.5);
+
+    //     const title = this.add.text(width / 2, height * 0.3, "饰品栏已满，是否替换？", {
+    //         fontSize: "24px",
+    //         fill: "#ffd700",
+    //         align: "center"
+    //     }).setOrigin(0.5);
+
+    //     const oldText = this.add.text(width * 0.25, height * 0.4, `当前饰品：\n${oldItem.showDetails()}`, {
+    //         fontSize: "16px",
+    //         fill: "#ccc",
+    //         wordWrap: { width: width * 0.3 }
+    //     }).setOrigin(0.5);
+
+    //     const newText = this.add.text(width * 0.75, height * 0.4, `新饰品：\n${newItem.showDetails()}`, {
+    //         fontSize: "16px",
+    //         fill: "#0f0",
+    //         wordWrap: { width: width * 0.3 }
+    //     }).setOrigin(0.5);
+
+    //     const yesBtn = this.add.text(width * 0.35, height * 0.65, "✅ 替换", {
+    //         fontSize: "20px",
+    //         fill: "#fff",
+    //         backgroundColor: "#444",
+    //         padding: 10
+    //     }).setOrigin(0.5).setInteractive();
+
+    //     const noBtn = this.add.text(width * 0.65, height * 0.65, "❌ 保留原饰品", {
+    //         fontSize: "20px",
+    //         fill: "#fff",
+    //         backgroundColor: "#444",
+    //         padding: 10
+    //     }).setOrigin(0.5).setInteractive();
+
+    //     const destroyAll = () => {
+    //         [bg, border, title, oldText, newText, yesBtn, noBtn].forEach(obj => obj.destroy());
+    //     };
+
+    //     yesBtn.on('pointerdown', () => {
+    //         destroyAll();
+    //         onConfirmReplace();
+    //     });
+
+    //     noBtn.on('pointerdown', () => {
+    //         destroyAll();
+    //         if (onCancel) onCancel();
+    //     });
+    // }
 
 
     showToast(text) {
-        const msg = this.add.text(this.scale.width / 2, this.scale.height - 100*window.innerHeight/600, text, {
-            fontSize: "20px",
+        const toast = this.add.text(this.scale.width / 2, this.scale.height - 80, text, {
+            fontSize: "18px",
             fill: "#fff",
-            backgroundColor: "#000"
+            backgroundColor: "#222",
+            padding: { x: 15, y: 8 }
         }).setOrigin(0.5);
 
-        this.time.delayedCall(1000, () => msg.destroy());
+        this.time.delayedCall(1500, () => toast.destroy());
     }
+
 
 
     /** 🛠️ 增加玩家属性 */
@@ -501,7 +785,7 @@ export class EventScene extends Phaser.Scene {
 
     /** 💪 所有属性提升 */
     boostAllStats(amount) {
-        const stats = ['maxHp', 'attack', 'maxMp', 'armor','speed'];
+        const stats = ['critChance','critDamage','hp','mp','maxHp','maxHp', 'attack', 'maxMp', 'armor','speed'];
         let data = this.registry.get('playerData');
         if (data) {
             stats.forEach(stat => {

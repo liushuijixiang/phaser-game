@@ -442,6 +442,14 @@ export class BattleManager {
                 ambush: 'victory_normal'
             }[this.enemyType] || 'victory_normal';
             this.logBattle();
+
+            playerData.items?.forEach(item => {
+                const effects = playerData.itemEffects || {};
+                if (effects.victoryHpBonus) {playerData.maxHp += effects.victoryHpBonus; playerData.hp += effects.victoryHpBonus; }
+                if (effects.victoryMpBonus) {playerData.maxMp += effects.victoryMpBonus; playerData.mp += effects.victoryMpBonus; }
+                if (effects.victoryAtkBonus) playerData.attack += effects.victoryAtkBonus;
+            });
+
             this.scene.scene.stop();
             this.scene.scene.start('EventScene', { from: fromType });
             // this.scene.scene.start('LevelSelectScene'); // 切换到游戏场景

@@ -167,7 +167,7 @@ export class BattleManager {
 
                 attacker.speedGauge = Math.max(0,attacker.speedGauge - Math.max(Phaser.Math.Between(95,100),defender.speed));
 
-                if (!processedUnits.has(attacker)) {
+                if (!processedUnits.has(attacker) && attacker.hp>0) {
                     this.triggerTurnStartEffects(attacker, defender);
                     processedUnits.add(attacker);
                 }
@@ -321,9 +321,9 @@ export class BattleManager {
             if (skill.type === "onDamageTaken") {
                 let result = skill.activate(player, finalDamage);
                 if(skill.canUse && skill.manaCost > 0){this.triggerSpellCastEffects(player,skill.manaCost);}
-                else if(!skill.canUse && skill.manaCost > 0){
-                    if(player.maxMp+player.tempMaxMp > skill.manaCost){this.triggerNotEnoughManaEffects(player);result = skill.activate(player);if(skill.canUse && skill.manaCost > 0){this.triggerSpellCastEffects(player,skill.manaCost);}}
-                }
+                // else if(!skill.canUse && skill.manaCost > 0){
+                //     if(player.maxMp+player.tempMaxMp > skill.manaCost){this.triggerNotEnoughManaEffects(player);result = skill.activate(player);if(skill.canUse && skill.manaCost > 0){this.triggerSpellCastEffects(player,skill.manaCost);}}
+                // }
                 // 如果技能返回有效值，更新 finalDamage
                 if (typeof result === 'number') {
                     finalDamage = result;

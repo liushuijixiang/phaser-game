@@ -364,7 +364,8 @@ export class BattleManager {
     applyArmor(defender, damage, attacker) {
         // 计算护甲减伤（包含防御降低效果）
         let effectiveArmor = Math.max(0, defender.armor+defender.tempArmor);
-        let armorReduction = effectiveArmor / (effectiveArmor + 100);
+        let floor = this.scene.registry.get("floor");
+        let armorReduction = effectiveArmor / (effectiveArmor + 100+20*floor);
         let finaldamage = damage * (1 - armorReduction);
         console.log(`   🛡 ${defender.name} 的护甲减免了 ${damage - Math.floor(finaldamage)} 伤害!`);
         BattleLog.write(`   🛡 ${defender.name} 的护甲减免了 ${damage - Math.floor(finaldamage)} 伤害!`);

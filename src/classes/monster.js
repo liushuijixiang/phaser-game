@@ -28,6 +28,9 @@ export class Monster {
         this.critChance = 0;
         this.critDamage = 150;
 
+        this.extraItemSlots = 0; // 额外饰品栏
+        this.currentItem = null; // 当前装备的饰品
+
         //临时属性
         this.tempMaxHp = 0;
         this.tempMaxMp = 0;

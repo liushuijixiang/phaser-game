@@ -52,6 +52,9 @@ export class MenuScene extends Phaser.Scene {
             let mp = Phaser.Math.Between(1,100)+Phaser.Math.Between(50,100);
             let attack = Phaser.Math.Between(3,8)+Phaser.Math.Between(5,10);
             this.registry.set('playerData', {
+                currentItem: null,  // 当前持有的饰品
+                backpack: [],       // 背包里的饰品
+                extraItemSlots: 0,
                 hp: hp,
                 maxHp: hp,
                 mp: mp,
@@ -68,6 +71,9 @@ export class MenuScene extends Phaser.Scene {
             mp = Phaser.Math.Between(1,10);
             attack = Phaser.Math.Between(1,5);
             this.registry.set('monsterData', {
+                currentItem: null,  // 当前持有的饰品
+                backpack: [],       // 背包里的饰品
+                extraItemSlots: 0,
                 hp: hp,
                 maxHp: hp,
                 mp: mp,

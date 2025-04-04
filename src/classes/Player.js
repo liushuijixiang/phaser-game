@@ -29,6 +29,10 @@ export class Player {
         this.critChance = playerData.critChance;
         this.critDamage = playerData.critDamage;
 
+        this.extraItemSlots = playerData.extraItemSlots; // 额外饰品栏
+        this.currentItem = playerData.currentItem; // 当前装备的饰品
+        this.backpack = playerData.backpack;
+
         //临时属性,战斗结束清除
         this.tempMaxHp = 0;
         this.tempMaxMp = 0;

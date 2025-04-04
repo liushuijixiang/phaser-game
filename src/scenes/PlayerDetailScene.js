@@ -41,6 +41,19 @@ export class PlayerDetailScene extends Phaser.Scene {
             ...skills.map(s => ` - ${s.name}（Lv.${s.level}）\n${s.description}`)
         ].join('\n');
 
+        // 处理饰品显示
+        if (player.currentItem) {
+            // 如果有饰品，显示饰品名称、描述和附带效果
+            content.push(`✨ 当前饰品: ${player.currentItem.name}`);
+            content.push(`   描述: ${player.currentItem.description}`);
+            if (player.currentItem.effect) {
+                content.push(`   饰品效果: ${this.getItemEffectDescription(player)}`);
+            }
+        } else {
+            // 没有饰品时的提示
+            content.push(`✨ 当前饰品: 无`);
+        }
+
         // ✅ 保存组件引用
         this.bg = this.add.rectangle(0, 0, 0, 0, 0x000044, 0.8);
         this.text = this.add.text(0, 0, content, {
@@ -61,6 +74,21 @@ export class PlayerDetailScene extends Phaser.Scene {
             this.scene.stop();
             this.scene.resume(this.returnScene);
         });
+    }
+
+    // 获取饰品效果描述
+    getItemEffectDescription(player) {
+        const item = player.currentItem;
+        if (!item || !item.effect) return '无效果';
+        
+        // 检查饰品类型，并返回对应的效果描述
+        if (item.type === '持久增益') {
+            return `增加生命：+${item.hpBonus}，增加法力：+${item.mpBonus}，增加攻击：+${item.attackBonus}`;
+        } else if (item.type === '一次性增益') {
+            // 如果是一次性增益，可以返回具体的效果说明
+            return `增益效果：${item.effect(player)}`;
+        }
+        return '未知效果';
     }
 
     resizeGame() {

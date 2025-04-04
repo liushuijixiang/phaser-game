@@ -180,15 +180,15 @@ export class ManaRegenSkill extends Skill {
 export class BattlefieldHealSkill extends Skill {
     constructor() {
         super("战地医疗", "onTurnStart", `每回合回复{amount1}%最大生命值`);
-        this.amount1 = 0.05 * this.level*100;
+        this.amount1 = 0.01 * this.level*100;
         this.description = this.formatDescription();
     }
     updateValues() {
-        this.amount1 = 0.05 * this.level*100;
+        this.amount1 = 0.01 * this.level*100;
     }
 
     activate(caster) {
-        const heal = Math.floor(caster.maxHp * 0.05 * this.level);
+        const heal = Math.floor(caster.maxHp * 0.01 * this.level);
         caster.hp = Math.min(caster.maxHp, caster.hp + heal);
         console.log(`\u2764\ufe0f ${this.name}回复 ${heal} HP`);
         BattleLog.write(`   \u2764\ufe0f ${this.name}回复 ${heal} HP`);
@@ -203,15 +203,15 @@ export class BattlefieldHealSkill extends Skill {
 export class ManaTideSkill extends Skill {
     constructor() {
         super("法力潮汐", "onTurnStart", `每回合回复{amount1}%最大法力值`);
-        this.amount1 = 0.05 * this.level*100;
+        this.amount1 = 0.01 * this.level*100;
         this.description = this.formatDescription();
     }
     updateValues() {
-        this.amount1 = 0.05 * this.level*100;
+        this.amount1 = 0.01 * this.level*100;
     }
 
     activate(caster) {
-        const regen = Math.floor((caster.maxMp+caster.tempMaxMp) * 0.05 * this.level);
+        const regen = Math.floor((caster.maxMp+caster.tempMaxMp) * 0.01 * this.level);
         caster.mp = Math.min((caster.maxMp+caster.tempMaxMp), caster.mp + regen);
         console.log(`\ud83d\udd04 法力潮汐恢复 ${regen} MP`);
         BattleLog.write(`   \ud83d\udd04 法力潮汐恢复 ${regen} MP`);
@@ -513,8 +513,8 @@ export class ArcaneEchoSkill extends Skill {
 
 export class ArcaneReversalSkill extends Skill {
     constructor() {
-        super("奥术反制", "onDamageTaken", `受到伤害时消耗等同于伤害量{amount1}%的法力以减少{amount2}%伤害`);
-        this.amount1 = 50/this.level;
+        super("奥术反制", "onDamageTaken", `受到伤害前消耗等同于伤害量{amount1}%的法力以减少{amount2}%伤害`);
+        this.amount1 = 50;
         this.amount2 = 50+this.level;
         this.description = this.formatDescription();
     }
@@ -524,7 +524,7 @@ export class ArcaneReversalSkill extends Skill {
     }
 
     activate(caster, damage) {
-        this.manaCost = Math.floor(damage/this.level * 0.5);
+        this.manaCost = Math.floor(damage * 0.5);
         this.checkCanUse(caster);
         if (this.canUse) {
             caster.mp -= this.manaCost;

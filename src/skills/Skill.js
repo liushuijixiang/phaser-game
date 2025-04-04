@@ -180,7 +180,7 @@ export class ManaRegenSkill extends Skill {
 export class BattlefieldHealSkill extends Skill {
     constructor() {
         super("战地医疗", "onTurnStart", `每回合回复{level}%最大生命值`);
-        this.amount1 = level;
+        this.amount1 = this.level;
         this.description = this.formatDescription();
     }
     updateValues() {
